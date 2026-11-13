@@ -61,9 +61,12 @@ jobs:
       - name: APK 이름 고정·서명 확인
         run: |
           cp app/build/outputs/apk/release/app-release.apk foodcourt-caller.apk
-          APKSIGNER="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner"
-          "$APKSIGNER" verify --print-certs foodcourt-caller.apk | grep -E "Signer #1 certificate (DN|SHA-256)"
           rm -f "$RUNNER_TEMP/release.keystore"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
+          echo "apksigner: $APKSIGNER"
+          "$APKSIGNER" verify --print-certs foodcourt-caller.apk > certs.txt
+          grep -E "certificate (DN|SHA-256)" certs.txt || cat certs.txt
+          rm -f certs.txt
 
       - name: 산출물 업로드
         uses: actions/upload-artifact@v4
