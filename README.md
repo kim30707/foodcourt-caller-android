@@ -13,6 +13,11 @@
 [직원 휴대폰 웹페이지] ──예비 입구──→ [방송 폰: 방송용 앱]
 ```
 
+## 그림 설치 안내서
+
+<https://kim30707.github.io/foodcourt-caller-android/> — 로그인 없이 휴대폰으로 볼 수 있습니다(키패드 연습판, 단계별 화면 그림, 설치 QR).
+원본은 `docs/index.html`이며, 고쳐서 main에 올리면 1~2분 뒤 같은 주소에 반영됩니다.
+
 ## 고정 주소(최신 APK)
 
 <https://github.com/kim30707/foodcourt-caller-android/releases/latest/download/foodcourt-caller.apk>
