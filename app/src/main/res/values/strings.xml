@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">호출 방송</string>
+    <string name="accessibility_description">매장 태블릿에 연결된 숫자 키패드에서 \'-\' 번호 Enter를 받아 방송 장치로 보냅니다. 그 밖의 키는 그대로 호출 앱에 전달하며, 화면 내용은 읽지 않습니다.</string>
+</resources>
