@@ -69,4 +69,17 @@ class NumberRulesTest {
         val noChime = AudioProgram.build(pcm, preSilenceMs = 0, chime = false, repeat = 1, repeatGapMs = 800, tailMs = 0)
         assertEquals(1600, noChime.size)
     }
+
+    @Test
+    fun voiceBoostRaisesQuietSpeechWithoutClipping() {
+        val quiet = ShortArray(1000) { i -> (3000 * kotlin.math.sin(i / 10.0)).toInt().toShort() }
+        assertTrue(AudioProgram.boost(quiet, 0) === quiet)
+        val out = AudioProgram.boost(quiet, 60)
+        val peakIn = quiet.maxOf { kotlin.math.abs(it.toInt()) }
+        val peakOut = out.maxOf { kotlin.math.abs(it.toInt()) }
+        assertTrue(peakOut > peakIn * 8)
+        assertTrue(peakOut <= Short.MAX_VALUE)
+        // 무음은 무음 그대로
+        assertTrue(AudioProgram.boost(ShortArray(10), 100).all { it == 0.toShort() })
+    }
 }

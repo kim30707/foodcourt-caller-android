@@ -18,6 +18,8 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.MessageDigest
 import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.tanh
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -133,8 +135,9 @@ class Announcer(private val context: Context, private val settings: AppSettings)
             Log.w(TAG, "WAV 만들기/읽기 실패 → TTS 직접 재생으로 대체")
             return speakFallback(text, rate)
         }
+        val loud = WavPcm(pcm.sampleRate, pcm.channels, AudioProgram.boost(pcm.data, settings.voiceBoost))
         val program = AudioProgram.build(
-            speech = pcm,
+            speech = loud,
             preSilenceMs = settings.preSilenceMs,
             chime = settings.chimeEnabled,
             repeat = settings.repeatCount,
@@ -363,6 +366,26 @@ object AudioProgram {
         return out
     }
 
+    /**
+     * 목소리 키우기. level 0이면 그대로.
+     * 1) 가장 큰 소리가 거의 최대가 되도록 끌어올리고(최대 8배)
+     * 2) 부드럽게 눌러(tanh) 작은 소리를 더 키운다. level 100이면 약 4배로 민다.
+     * 결과는 절대 최대값을 넘지 않아 찢어지는 소리(클리핑)가 나지 않는다.
+     */
+    fun boost(data: ShortArray, level: Int): ShortArray {
+        val lv = level.coerceIn(0, 100)
+        if (lv == 0 || data.isEmpty()) return data
+        var peak = 1
+        for (v in data) { val a = abs(v.toInt()); if (a > peak) peak = a }
+        val norm = min(8.0, 0.97 * Short.MAX_VALUE / peak)
+        val drive = 1.0 + lv / 100.0 * 3.0
+        val scale = 0.97 * Short.MAX_VALUE / tanh(drive)
+        return ShortArray(data.size) { i ->
+            val x = data[i] * norm / Short.MAX_VALUE
+            (tanh(drive * x) * scale).toInt().coerceIn(-32767, 32767).toShort()
+        }
+    }
+
     /** 코드로 만든 두 음(딩동) 사인파. 외부 음원 파일은 쓰지 않는다. */
     fun chime(sampleRate: Int): ShortArray {
         val ding = tone(sampleRate, 659.25, 0.45)  // 미(E5)
@@ -380,7 +403,7 @@ object AudioProgram {
             val env = min(1.0, i / attack) * exp(-3.5 * t / seconds)
             // 기본음 + 배음을 조금 섞어 종소리처럼
             val v = 0.75 * sin(2 * PI * freq * t) + 0.25 * sin(2 * PI * freq * 2 * t)
-            (v * env * 0.5 * Short.MAX_VALUE).toInt().toShort()
+            (v * env * 0.7 * Short.MAX_VALUE).toInt().toShort()
         }
     }
 

@@ -489,6 +489,7 @@ class MainActivity : Activity() {
         // 소리 설정
         val sound = page.section("소리")
         sound.slider("방송 음량", 0, 100, settings.volume, "") { settings.volume = it }
+        sound.slider("목소리 키우기 (0=원래 크기)", 0, 100, settings.voiceBoost, "") { settings.voiceBoost = it }
         sound.slider("말하기 속도", 50, 200, settings.speechRatePercent, "%") { settings.speechRatePercent = it }
         sound.slider("반복 횟수", 1, 3, settings.repeatCount, "회") { settings.repeatCount = it }
         sound.toggle("차임(딩동) 켜기", settings.chimeEnabled) { settings.chimeEnabled = it }

@@ -101,6 +101,11 @@ class AppSettings(context: Context) {
         get() = p.getInt("volume", 100).coerceIn(0, 100)
         set(v) = putInt("volume", v.coerceIn(0, 100))
 
+    /** 목소리 키우기 0~100 (0=원래 크기). TTS 목소리는 음악보다 작게 나와서 기본으로 키운다 */
+    var voiceBoost: Int
+        get() = p.getInt("voiceBoost", 60).coerceIn(0, 100)
+        set(v) = putInt("voiceBoost", v.coerceIn(0, 100))
+
     /** 말하기 속도(%) 50~200, 100이 보통 */
     var speechRatePercent: Int
         get() = p.getInt("speechRate", 100).coerceIn(50, 200)
