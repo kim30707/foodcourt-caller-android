@@ -1,6 +1,6 @@
 package kr.sehotech.foodcourtcaller.server
 
-/** GET /admin : 원격 관리 페이지(PIN 필요). 데이터는 /admin/api/* 로 주고받는다. */
+/** GET /admin : 원격 관리 페이지(PIN 필요). 데이터는 /admin/api/ 아래 주소로 주고받는다. */
 object AdminPage {
     val html = """<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
