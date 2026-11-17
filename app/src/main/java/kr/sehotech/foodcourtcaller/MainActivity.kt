@@ -229,8 +229,8 @@ class MainActivity : Activity() {
             settings.role = AppSettings.ROLE_TERMINAL
             render()
         }
-        val s = page.section("방송용 (앰프 옆 폰)")
-        s.label("매장 태블릿과 직원 휴대폰에서 온 호출을 음성으로 방송합니다. 앰프에 블루투스나 선으로 연결합니다.")
+        val s = page.section("방송용 (앰프 옆 기기)")
+        s.label("매장 태블릿과 직원 휴대폰에서 온 호출을 음성으로 방송합니다. 방송 기기에는 '호출 방송(방송용)' 앱을 따로 설치하는 것을 권합니다.")
         s.button("방송용으로 쓰기") {
             settings.role = AppSettings.ROLE_SERVER
             render()
@@ -278,27 +278,160 @@ class MainActivity : Activity() {
     // ───────── 매장용 설정 ─────────
 
     private fun showTerminal() {
-        val page = newPage("호출 방송 · 매장용")
+        val page = newPage("호출 방송 · 매장 태블릿 설정")
 
-        // 매장
-        val storeCard = page.section("매장")
+        // 화면이 열려 있는 동안만 기억하는 확인 결과
+        var connectOk: Boolean? = null
+        var testOk = false
+
+        // ── 진행 요약 ──
+        val head = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(14), dp(16), dp(14))
+        }
+        page.addView(head)
+        val headTitle = head.label("", 22f, bold = true)
+        val headSub = head.label("", 14f)
+
+        /** 단계 카드: 번호·제목·상태 줄. body에 버튼 등을 넣는다 */
+        class Step(val title: TextView, val status: TextView, val body: LinearLayout)
+
+        fun step(no: Int, name: String, help: String): Step {
+            val card = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setBackgroundColor(Color.WHITE)
+                setPadding(dp(14), dp(12), dp(14), dp(12))
+            }
+            page.addView(card, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(12) })
+            val t = card.label("$no. $name", 19f, bold = true)
+            card.label(help, 13f, color = Color.GRAY)
+            val st = card.label("", 16f, bold = true)
+            return Step(t, st, card)
+        }
+
+        fun setStatus(s: Step, ok: Boolean?, text: String) {
+            s.status.text = (when (ok) { true -> "✔ "; false -> "✖ "; null -> "… " }) + text
+            s.status.setTextColor(Color.parseColor(when (ok) { true -> "#2E7D32"; false -> "#C62828"; null -> "#1F4E79" }))
+            s.title.setTextColor(Color.parseColor(if (ok == true) "#2E7D32" else "#1D1D1F"))
+        }
+
+        fun bigButton(parent: LinearLayout, t: String, onClick: () -> Unit): Button =
+            parent.button(t, onClick).apply {
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+                minHeight = dp(56)
+            }
+
+        // ── 1. 매장 ──
+        val s1 = step(1, "이 태블릿의 매장 고르기", "방송에서 읽을 매장 이름입니다.")
         val storeSpinner = Spinner(this)
-        storeCard.addView(storeSpinner)
+        s1.body.addView(storeSpinner)
+        var spinnerReady = false
         fun fillStores(names: List<String>) {
             val list = names.toMutableList()
             if (settings.storeName !in list) list.add(0, settings.storeName)
+            spinnerReady = false
             storeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, list)
             storeSpinner.setSelection(list.indexOf(settings.storeName))
             storeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                    if (!spinnerReady) { spinnerReady = true; return }
                     settings.storeName = list[pos]
+                    settings.storeConfirmed = true
                 }
 
                 override fun onNothingSelected(p: AdapterView<*>?) {}
             }
         }
         fillStores(DefaultStores.list.filter { it.enabled }.map { it.name })
-        storeCard.button("방송 장치에서 매장 목록 받기") {
+        bigButton(s1.body, "이 매장이 맞아요") {
+            settings.storeConfirmed = true
+            toast("${settings.storeName}(으)로 정했습니다")
+        }
+
+        // ── 2. 방송 장치 연결 ──
+        val s2 = step(2, "방송 장치와 연결", "앰프 옆 방송 장치와 같은 와이파이여야 합니다. 버튼 하나로 찾고 확인합니다.")
+        val addrLine = s2.body.label("", 14f, color = Color.parseColor("#555555"))
+        fun checkConnection(discoverFirst: Boolean) {
+            connectOk = null
+            CallSender.runAsync({
+                var addr = settings.serverAddress
+                var found = false
+                if (discoverFirst || addr.isBlank() || CallSender.get(addr, "/status") == null) {
+                    CallSender.discover(this)?.let { addr = it; found = true }
+                }
+                Triple(addr, found, if (addr.isBlank()) "방송 장치를 찾지 못했습니다." else CallSender.statusText(addr))
+            }) { (addr, found, text) ->
+                if (found) settings.serverAddress = addr
+                val ok = text.startsWith("연결됨")
+                connectOk = ok
+                s2.status.tag = if (ok) "연결됨 · $addr" else
+                    "연결 안 됨 — 방송 장치가 켜져 있는지, 같은 와이파이인지 확인하세요"
+                toast(if (ok) "방송 장치와 연결됨" else "연결 안 됨")
+            }
+        }
+        bigButton(s2.body, "방송 장치 찾기·연결 확인") {
+            s2.status.tag = "찾는 중…(최대 10초)"
+            connectOk = null
+            checkConnection(discoverFirst = false)
+        }
+        // 직접 입력(자동 찾기가 안 될 때)
+        val manual = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = View.GONE }
+        s2.body.button("주소 직접 넣기") { manual.visibility = if (manual.visibility == View.GONE) View.VISIBLE else View.GONE }
+        s2.body.addView(manual)
+        manual.label("방송 장치 화면 맨 위의 주소(예: 192.168.0.44:8080)", 13f, color = Color.GRAY)
+        val addrEdit = manual.edit("예: 192.168.0.44:8080", settings.serverAddress, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
+        manual.button("이 주소로 저장·확인") {
+            settings.serverAddress = addrEdit.text.toString()
+            addrEdit.setText(settings.serverAddress)
+            s2.status.tag = "확인 중…"
+            connectOk = null
+            checkConnection(discoverFirst = false)
+        }
+
+        // ── 3. 키패드 기능(접근성) ──
+        val s3 = step(
+            3, "키패드 기능 켜기",
+            "[설정 열기] → '설치된 앱'(또는 '다운로드한 앱') → '호출 방송' → 켜기 → 허용. 끝나면 뒤로 가기로 돌아오세요.",
+        )
+        bigButton(s3.body, "설정 열기") { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+
+        // ── 4. 배터리 ──
+        val s4 = step(4, "꺼지지 않게 하기", "배터리 절약 때문에 앱이 멈추지 않게 합니다. 뜨는 창에서 '허용'을 누르세요.")
+        bigButton(s4.body, "배터리 제한 없음으로") {
+            try {
+                startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
+            } catch (e: Exception) {
+                startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+            }
+        }
+
+        // ── 5. 테스트 ──
+        val s5 = step(5, "테스트 방송", "스피커에서 테스트 방송이 나오면 끝입니다. 이후엔 키패드에서 - 번호 Enter.")
+        bigButton(s5.body, "테스트 방송 보내기") {
+            s5.status.tag = "보내는 중…"
+            CallSender.send(this, null, test = true, source = Protocol.SOURCE_APP) { r ->
+                testOk = r is CallSender.Result.Ok
+                s5.status.tag = when (r) {
+                    is CallSender.Result.Ok -> "보냈습니다. 스피커에서 소리가 났나요?"
+                    is CallSender.Result.Rejected -> "거절: ${CallSender.errorText(r.error)}"
+                    CallSender.Result.Unreachable -> "방송 장치에 연결 안 됨 — 2번을 다시 하세요"
+                    CallSender.Result.Skipped -> ""
+                }
+            }
+        }
+
+        // ── 키패드 확인 ──
+        val keyCheck = page.section("키패드 눌러 보기")
+        keyCheck.label("키패드 키를 누르면 아래에 키 이름이 나옵니다. 아무것도 안 나오면 3번이 꺼져 있거나 키패드 연결을 확인하세요.", 13f, color = Color.GRAY)
+        val keyList = keyCheck.label("", 14f)
+
+        // ── 고급 설정(접힘) ──
+        val advWrap = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = View.GONE }
+        page.button("고급 설정 보기/숨기기") { advWrap.visibility = if (advWrap.visibility == View.GONE) View.VISIBLE else View.GONE }
+        page.addView(advWrap)
+
+        val adv = advWrap.section("방송 장치 · 기록")
+        adv.button("방송 장치에서 매장 목록 받기") {
             val addr = settings.serverAddress
             CallSender.runAsync({ CallSender.fetchStores(addr) }) { names ->
                 if (names == null) toast("방송 장치에 연결 안 됨") else {
@@ -306,90 +439,19 @@ class MainActivity : Activity() {
                 }
             }
         }
-        storeCard.label("이 기기 이름(기록용, 비우면 \"매장 이름 태블릿\")", 13f, color = Color.GRAY)
-        val devEdit = storeCard.edit("예: 하즈벤 태블릿", settings.deviceName)
-
-        // 방송 장치
-        val net = page.section("방송 장치")
-        net.label("주소(IP:포트)", 13f, color = Color.GRAY)
-        val addrEdit = net.edit("예: 192.168.0.23:8080", settings.serverAddress, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
-        net.label("토큰(방송 장치에 설정한 경우만)", 13f, color = Color.GRAY)
-        val tokenEdit = net.edit("비워 두면 사용 안 함", settings.terminalToken)
-        val netResult = TextView(this).apply {
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
-            setTypeface(typeface, Typeface.BOLD)
-            setPadding(dp(12), dp(10), dp(12), dp(10))
-            visibility = View.GONE
-        }
-
-        /** 결과를 큰 글씨·색 상자로 보여 준다. ok=null이면 진행 중 */
-        fun showNet(text: String, ok: Boolean?) {
-            netResult.visibility = View.VISIBLE
-            netResult.text = text
-            val (fg, bg) = when (ok) {
-                true -> "#1B5E20" to "#E8F5E9"
-                false -> "#B71C1C" to "#FFEBEE"
-                null -> "#1F4E79" to "#E3F2FD"
-            }
-            netResult.setTextColor(Color.parseColor(fg))
-            netResult.setBackgroundColor(Color.parseColor(bg))
-        }
-        fun saveNet() {
-            settings.serverAddress = addrEdit.text.toString()
+        adv.label("토큰(방송 장치에 설정한 경우만)", 13f, color = Color.GRAY)
+        val tokenEdit = adv.edit("비워 두면 사용 안 함", settings.terminalToken)
+        adv.label("이 기기 이름(기록용, 비우면 \"매장 이름 태블릿\")", 13f, color = Color.GRAY)
+        val devEdit = adv.edit("예: 하즈벤 태블릿", settings.deviceName)
+        adv.button("저장") {
             settings.terminalToken = tokenEdit.text.toString()
             settings.deviceName = devEdit.text.toString()
-            addrEdit.setText(settings.serverAddress)
+            toast("저장했습니다")
         }
-        net.row(
-            smallButton("저장") { saveNet(); toast("저장했습니다") },
-            smallButton("자동 찾기") {
-                showNet("같은 와이파이에서 방송 장치를 찾는 중…", null)
-                CallSender.runAsync({ CallSender.discover(this) }) { found ->
-                    if (found == null) {
-                        showNet("✖ 찾지 못했습니다. 같은 와이파이인지 확인하거나 주소를 직접 넣으세요.", false)
-                    } else {
-                        settings.serverAddress = found
-                        addrEdit.setText(found)
-                        showNet("✔ 찾았습니다: $found", true)
-                    }
-                }
-            },
-            smallButton("연결 테스트") {
-                val typed = addrEdit.text.toString().trim()
-                saveNet()
-                val addr = settings.serverAddress
-                val fixed = if (typed.isNotEmpty() && typed != addr) "주소를 $addr 로 고쳤습니다.\n" else ""
-                showNet("${fixed}연결 확인 중… ($addr)", null)
-                CallSender.runAsync({ CallSender.statusText(addr) }) {
-                    val ok = it.startsWith("연결됨")
-                    showNet(fixed + (if (ok) "✔ " else "✖ ") + it, ok)
-                    toast(if (ok) "방송 장치와 연결됨" else "연결 안 됨")
-                }
-            },
-        )
-        net.addView(netResult, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8) })
+        adv.label("최근 전송 5건", 13f, color = Color.GRAY)
+        val recent = adv.label("")
 
-        // 접근성
-        val acc = page.section("접근성 서비스 (키 가로채기)")
-        val accState = acc.label("")
-        refreshers += {
-            val on = KeypadInterceptService.isEnabledInSettings(this)
-            val run = KeypadInterceptService.connected
-            accState.text = when {
-                on && run -> "켜짐 · 동작 중 ✔"
-                on -> "켜짐 · 아직 연결 안 됨(잠시 기다리거나 다시 켜 주세요)"
-                else -> "꺼짐 — 키패드 방송이 동작하지 않습니다"
-            }
-            accState.setTextColor(if (on && run) Color.parseColor("#2E7D32") else Color.parseColor("#C62828"))
-        }
-        acc.button("접근성 설정 열기") {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-        }
-
-        page.batterySection()
-
-        // 키 설정
-        val keys = page.section("방송 키")
+        val keys = advWrap.section("방송 키")
         keys.label("이 키를 누르고 번호 + Enter를 치면 방송합니다.", 13f, color = Color.GRAY)
         val checks = KeyCodes.TRIGGER_CHOICES.map { (code, name) ->
             CheckBox(this).apply {
@@ -413,37 +475,47 @@ class MainActivity : Activity() {
             KeypadInterceptService.reloadConfig()
             toast("저장했습니다")
         }
+        advWrap.roleChangeSection()
 
-        // 키 입력 확인
-        val keyCheck = page.section("키 입력 확인")
-        keyCheck.label("키패드를 눌러 보면 마지막 10개 키 이름이 아래에 나옵니다(접근성 서비스가 켜져 있어야 함).", 13f, color = Color.GRAY)
-        val keyList = keyCheck.label("")
-        var showKeys = false
-        keyCheck.button("키 입력 확인 켜기/끄기") { showKeys = !showKeys }
+        // ── 1초마다 상태 갱신 ──
         refreshers += {
-            keyList.text = if (!showKeys) "(꺼짐)" else KeypadInterceptService.recentKeys().joinToString("\n").ifEmpty { "아직 누른 키가 없습니다." }
+            val st1 = settings.storeConfirmed
+            setStatus(s1, if (st1) true else null, if (st1) "매장: ${settings.storeName}" else "매장을 고른 뒤 [이 매장이 맞아요]를 누르세요")
+
+            addrLine.text = "주소: ${settings.serverAddress.ifBlank { "아직 없음" }}"
+            val t2 = s2.status.tag as? String
+            setStatus(s2, connectOk, t2 ?: if (settings.serverAddress.isBlank()) "아직 연결 안 함" else "확인 중…")
+
+            val on = KeypadInterceptService.isEnabledInSettings(this)
+            val run = KeypadInterceptService.connected
+            setStatus(
+                s3, on && run,
+                when {
+                    on && run -> "켜짐"
+                    on -> "켜졌지만 아직 연결 안 됨 — 잠시 기다리거나 껐다 다시 켜세요"
+                    else -> "꺼짐 — 키패드 방송이 안 됩니다"
+                },
+            )
+
+            val bat = getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
+            setStatus(s4, bat, if (bat) "제한 없음" else "아직 — 앱이 멈출 수 있습니다")
+
+            val t5 = s5.status.tag as? String
+            setStatus(s5, if (t5 == null) null else if (t5.startsWith("보내는")) null else testOk, t5 ?: "아직 안 함")
+
+            val done = listOf(st1, connectOk == true, on && run, bat, testOk).count { it }
+            headTitle.text = if (done == 5) "✔ 설정 끝! 키패드로 방송할 수 있습니다" else "설정 $done / 5 완료"
+            headSub.text = if (done == 5) "매장: ${settings.storeName} · 방송 장치: ${settings.serverAddress}" else "위에서부터 차례로 초록색 ✔가 되게 하세요."
+            head.setBackgroundColor(Color.parseColor(if (done == 5) "#E8F5E9" else "#FFF8E1"))
+            headTitle.setTextColor(Color.parseColor(if (done == 5) "#1B5E20" else "#8D6E00"))
+
+            keyList.text = KeypadInterceptService.recentKeys().take(5).joinToString("\n").ifEmpty { "아직 누른 키가 없습니다." }
+            recent.text = settings.recentSends.joinToString("\n").ifEmpty { "없음" }
         }
 
-        // 테스트
-        val test = page.section("테스트")
-        val testResult = test.label("")
-        test.button("테스트 방송") {
-            saveNet()
-            testResult.text = "보내는 중…"
-            CallSender.send(this, null, test = true, source = Protocol.SOURCE_APP) { r ->
-                testResult.text = when (r) {
-                    is CallSender.Result.Ok -> "테스트 방송 요청 완료"
-                    is CallSender.Result.Rejected -> "거절: ${CallSender.errorText(r.error)}"
-                    CallSender.Result.Unreachable -> "방송 장치에 연결 안 됨"
-                    CallSender.Result.Skipped -> ""
-                }
-            }
-        }
-        test.label("최근 전송 5건", 13f, color = Color.GRAY)
-        val recent = test.label("")
-        refreshers += { recent.text = settings.recentSends.joinToString("\n").ifEmpty { "없음" } }
-
-        page.roleChangeSection()
+        // 화면을 열면 바로 연결을 확인한다(주소가 없으면 자동으로 찾는다)
+        s2.status.tag = if (settings.serverAddress.isBlank()) "방송 장치를 찾는 중…" else "연결 확인 중…"
+        checkConnection(discoverFirst = false)
     }
 
     // ───────── 방송용 설정 ─────────

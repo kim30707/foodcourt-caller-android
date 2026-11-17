@@ -40,6 +40,11 @@ class AppSettings(context: Context) {
         get() = str("storeName", "하즈벤")
         set(v) = putStr("storeName", v.trim())
 
+    /** 설정 화면에서 매장을 확인했는지 */
+    var storeConfirmed: Boolean
+        get() = p.getBoolean("storeConfirmed", false)
+        set(v) = putBool("storeConfirmed", v)
+
     /** 이 기기 이름(기록용). 비어 있으면 "{매장} 태블릿" */
     var deviceName: String
         get() = str("deviceName", "")
