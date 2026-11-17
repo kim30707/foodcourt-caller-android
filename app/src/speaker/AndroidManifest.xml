@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 방송 전용 앱: 키패드 가로채기(접근성 서비스)를 빼서 Play 프로텍트에 덜 막히게 한다 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <service
+            android:name="kr.sehotech.foodcourtcaller.terminal.KeypadInterceptService"
+            tools:node="remove" />
+    </application>
+</manifest>

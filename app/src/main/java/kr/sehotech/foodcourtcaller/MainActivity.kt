@@ -239,7 +239,8 @@ class MainActivity : Activity() {
 
     private fun LinearLayout.roleChangeSection() {
         val c = section("기타")
-        c.label("앱 버전 ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})", color = Color.GRAY)
+        c.label("앱 버전 ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})" + if (BuildConfig.SPEAKER_ONLY) " · 방송 전용" else "", color = Color.GRAY)
+        if (BuildConfig.SPEAKER_ONLY) return
         c.button("역할 바꾸기") {
             AlertDialog.Builder(this@MainActivity)
                 .setTitle("역할 바꾸기")
@@ -314,7 +315,25 @@ class MainActivity : Activity() {
         val addrEdit = net.edit("예: 192.168.0.23:8080", settings.serverAddress, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
         net.label("토큰(방송 장치에 설정한 경우만)", 13f, color = Color.GRAY)
         val tokenEdit = net.edit("비워 두면 사용 안 함", settings.terminalToken)
-        val netResult = TextView(this)
+        val netResult = TextView(this).apply {
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
+            setTypeface(typeface, Typeface.BOLD)
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+            visibility = View.GONE
+        }
+
+        /** 결과를 큰 글씨·색 상자로 보여 준다. ok=null이면 진행 중 */
+        fun showNet(text: String, ok: Boolean?) {
+            netResult.visibility = View.VISIBLE
+            netResult.text = text
+            val (fg, bg) = when (ok) {
+                true -> "#1B5E20" to "#E8F5E9"
+                false -> "#B71C1C" to "#FFEBEE"
+                null -> "#1F4E79" to "#E3F2FD"
+            }
+            netResult.setTextColor(Color.parseColor(fg))
+            netResult.setBackgroundColor(Color.parseColor(bg))
+        }
         fun saveNet() {
             settings.serverAddress = addrEdit.text.toString()
             settings.terminalToken = tokenEdit.text.toString()
@@ -324,25 +343,31 @@ class MainActivity : Activity() {
         net.row(
             smallButton("저장") { saveNet(); toast("저장했습니다") },
             smallButton("자동 찾기") {
-                netResult.text = "같은 와이파이에서 방송 장치를 찾는 중…"
+                showNet("같은 와이파이에서 방송 장치를 찾는 중…", null)
                 CallSender.runAsync({ CallSender.discover(this) }) { found ->
                     if (found == null) {
-                        netResult.text = "찾지 못했습니다. 같은 와이파이인지 확인하거나 주소를 직접 넣으세요."
+                        showNet("✖ 찾지 못했습니다. 같은 와이파이인지 확인하거나 주소를 직접 넣으세요.", false)
                     } else {
                         settings.serverAddress = found
                         addrEdit.setText(found)
-                        netResult.text = "찾았습니다: $found"
+                        showNet("✔ 찾았습니다: $found", true)
                     }
                 }
             },
             smallButton("연결 테스트") {
+                val typed = addrEdit.text.toString().trim()
                 saveNet()
-                netResult.text = "확인 중…"
                 val addr = settings.serverAddress
-                CallSender.runAsync({ CallSender.statusText(addr) }) { netResult.text = it }
+                val fixed = if (typed.isNotEmpty() && typed != addr) "주소를 $addr 로 고쳤습니다.\n" else ""
+                showNet("${fixed}연결 확인 중… ($addr)", null)
+                CallSender.runAsync({ CallSender.statusText(addr) }) {
+                    val ok = it.startsWith("연결됨")
+                    showNet(fixed + (if (ok) "✔ " else "✖ ") + it, ok)
+                    toast(if (ok) "방송 장치와 연결됨" else "연결 안 됨")
+                }
             },
         )
-        net.addView(netResult)
+        net.addView(netResult, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8) })
 
         // 접근성
         val acc = page.section("접근성 서비스 (키 가로채기)")
@@ -503,6 +528,48 @@ class MainActivity : Activity() {
             preEdit.setText(settings.preSilenceMs.toString())
             dupEdit.setText(settings.duplicateSec.toString())
             toast("저장했습니다")
+        }
+
+        // 음악 자동 켜기/끄기
+        val mu = page.section("음악 자동 켜기/끄기")
+        mu.label("영업 시작 시각에 음악 앱(유튜브 뮤직 등)을 재생하고, 끝나는 시각에 멈춥니다. 이 기기에서 음악을 트는 경우에만 동작합니다.", 13f, color = Color.GRAY)
+        mu.label("유튜브 뮤직은 프리미엄이어야 화면이 꺼져도 재생됩니다. 영업 시작 전에 음악 앱에서 재생목록을 한 번 틀었다가 멈춰 두면 그 목록이 이어서 나옵니다.", 13f, color = Color.GRAY)
+        val muSwitch = mu.toggle("자동 켜기/끄기 사용", settings.musicAutoEnabled) {}
+        mu.label("켜는 시각 (예: 10:30)", 13f, color = Color.GRAY)
+        val onEdit = mu.edit("10:30", kr.sehotech.foodcourtcaller.server.MusicSchedule.format(settings.musicOnMin))
+        mu.label("끄는 시각 (예: 21:00)", 13f, color = Color.GRAY)
+        val offEdit = mu.edit("21:00", kr.sehotech.foodcourtcaller.server.MusicSchedule.format(settings.musicOffMin))
+        mu.button("음악 시간 저장") {
+            val on = kr.sehotech.foodcourtcaller.server.MusicSchedule.parse(onEdit.text.toString())
+            val off = kr.sehotech.foodcourtcaller.server.MusicSchedule.parse(offEdit.text.toString())
+            if (on == null || off == null) {
+                toast("시각을 10:30 처럼 넣어 주세요"); return@button
+            }
+            if (on == off) {
+                toast("켜는 시각과 끄는 시각이 같습니다"); return@button
+            }
+            settings.musicOnMin = on
+            settings.musicOffMin = off
+            settings.musicAutoEnabled = muSwitch.isChecked
+            onEdit.setText(kr.sehotech.foodcourtcaller.server.MusicSchedule.format(on))
+            offEdit.setText(kr.sehotech.foodcourtcaller.server.MusicSchedule.format(off))
+            toast(if (muSwitch.isChecked) "저장했습니다. 매일 ${onEdit.text}에 켜고 ${offEdit.text}에 끕니다" else "저장했습니다(자동 사용 꺼짐)")
+        }
+        mu.row(
+            smallButton("지금 켜기 테스트") {
+                BroadcastService.instance?.musicNow(true, "테스트") ?: toast("서버가 아직 시작되지 않았습니다")
+            },
+            smallButton("지금 끄기 테스트") {
+                BroadcastService.instance?.musicNow(false, "테스트") ?: toast("서버가 아직 시작되지 않았습니다")
+            },
+        )
+        val muState = mu.label("")
+        refreshers += {
+            val last = BroadcastService.instance?.musicLastText.orEmpty()
+            val plan = if (settings.musicAutoEnabled) {
+                "자동 사용 중 · 매일 ${kr.sehotech.foodcourtcaller.server.MusicSchedule.format(settings.musicOnMin)} 켜기 / ${kr.sehotech.foodcourtcaller.server.MusicSchedule.format(settings.musicOffMin)} 끄기"
+            } else "자동 사용 안 함"
+            muState.text = if (last.isEmpty()) plan else "$plan\n최근: $last"
         }
 
         // 서버 설정

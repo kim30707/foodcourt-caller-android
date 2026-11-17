@@ -104,6 +104,57 @@ class BroadcastService : Service() {
     private var ttsFailures = 0
     private var lastPrune = 0L
 
+    lateinit var music: MusicControl
+        private set
+
+    /** 음악 예약: 마지막으로 확인한 시각(하루 중 분), -1이면 아직 없음 */
+    private var musicPrevMin = -1
+
+    @Volatile
+    var musicLastText: String = ""
+        private set
+
+    private val musicTicker = object : Runnable {
+        override fun run() {
+            try {
+                checkMusicSchedule()
+            } catch (e: Exception) {
+                Log.e(TAG, "음악 예약 오류", e)
+            }
+            main.postDelayed(this, 15_000)
+        }
+    }
+
+    private fun nowMinute(): Int {
+        val c = java.util.Calendar.getInstance()
+        return c.get(java.util.Calendar.HOUR_OF_DAY) * 60 + c.get(java.util.Calendar.MINUTE)
+    }
+
+    /** 켜기/끄기 시각을 지났으면 음악 앱에 재생·정지 신호를 보낸다 */
+    private fun checkMusicSchedule() {
+        val now = nowMinute()
+        val prev = musicPrevMin
+        musicPrevMin = now
+        if (!settings.musicAutoEnabled || prev < 0) return
+        when (MusicSchedule.due(prev, now, settings.musicOnMin, settings.musicOffMin)) {
+            MusicSchedule.Action.PLAY -> musicNow(true, "예약")
+            MusicSchedule.Action.PAUSE -> musicNow(false, "예약")
+            null -> {}
+        }
+    }
+
+    /** 음악 켜기/끄기(예약 또는 설정 화면 테스트) */
+    fun musicNow(play: Boolean, why: String) {
+        val what = if (play) "음악 켜기" else "음악 끄기"
+        musicLastText = "$what 신호 보냄($why) · 확인 중…"
+        val done: (Boolean) -> Unit = { ok ->
+            val time = java.text.SimpleDateFormat("HH:mm", java.util.Locale.KOREA).format(java.util.Date())
+            musicLastText = "$time $what($why): " + if (ok) "성공" else if (play) "소리가 안 남(음악 앱을 한 번 켜 두세요)" else "아직 소리가 남"
+            logEvent(if (play) "music_on" else "music_off", musicLastText)
+        }
+        if (play) music.play(done) else music.pause(done)
+    }
+
     private val watchdog = object : Runnable {
         override fun run() {
             try {
@@ -133,6 +184,8 @@ class BroadcastService : Service() {
         startWorker()
         startServer()
         main.postDelayed(watchdog, WATCHDOG_MS)
+        music = MusicControl(this)
+        main.post(musicTicker)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

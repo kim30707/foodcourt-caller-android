@@ -5,7 +5,10 @@
 
 - 기존 호출 시스템(호출 앱, 호출 서버, 모니터 셋톱, 포스기)은 건드리지 않습니다. 태블릿에는 이 앱만 추가합니다.
 - 인터넷 없이 건물 안 와이파이로만 통신합니다. 인터넷이나 호출 서버가 멈춰도 와이파이만 살아 있으면 방송됩니다.
-- 설치 파일(APK)은 하나입니다. 처음 실행할 때 **매장용**(태블릿) 또는 **방송용**(앰프 옆 폰)을 고릅니다.
+- 설치 파일(APK)은 두 가지입니다.
+  - `foodcourt-caller.apk`: 매장 태블릿용. 처음 실행할 때 **매장용**(또는 방송용)을 고릅니다. 키패드를 가로채는 접근성 기능이 들어 있습니다.
+  - `foodcourt-caller-speaker.apk`: **방송 전용**(앱 이름 "호출 방송(방송용)"). 접근성 기능이 없어 설치가 쉽고, 열면 바로 방송용 화면입니다. 방송 태블릿·폰에는 이것을 설치합니다.
+- 방송용 화면의 **음악 자동 켜기/끄기**로 영업 시작·종료 시각에 같은 기기의 음악 앱(유튜브 뮤직 등)을 재생·정지할 수 있습니다.
 
 ```
 [숫자 키패드] → [매장 태블릿: 매장용 앱] ──건물 와이파이──→ [방송 폰: 방송용 앱] → [앰프] → [스피커]
@@ -20,7 +23,8 @@
 
 ## 고정 주소(최신 APK)
 
-<https://github.com/kim30707/foodcourt-caller-android/releases/latest/download/foodcourt-caller.apk>
+- 매장 태블릿용: <https://github.com/kim30707/foodcourt-caller-android/releases/latest/download/foodcourt-caller.apk>
+- 방송 전용: <https://github.com/kim30707/foodcourt-caller-android/releases/latest/download/foodcourt-caller-speaker.apk>
 
 저장소가 공개라서 태블릿·폰의 Chrome에서 바로 받을 수 있습니다.
 저장소를 비공개로 바꾸면 이 주소는 GitHub 로그인이 있어야 받을 수 있습니다. 그때는 PC에서 받아 구글 드라이브 등으로 옮겨 설치합니다.

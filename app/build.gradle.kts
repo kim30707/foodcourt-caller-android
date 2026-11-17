@@ -22,6 +22,20 @@ android {
         versionName = ciVersionName
     }
 
+    // full: 매장용·방송용 모두(접근성 서비스 포함) / speaker: 방송 전용(접근성 없음, 설치가 쉬움)
+    flavorDimensions += "kind"
+    productFlavors {
+        create("full") {
+            dimension = "kind"
+            buildConfigField("boolean", "SPEAKER_ONLY", "false")
+        }
+        create("speaker") {
+            dimension = "kind"
+            applicationIdSuffix = ".speaker"
+            buildConfigField("boolean", "SPEAKER_ONLY", "true")
+        }
+    }
+
     signingConfigs {
         if (keystorePath != null) {
             create("release") {

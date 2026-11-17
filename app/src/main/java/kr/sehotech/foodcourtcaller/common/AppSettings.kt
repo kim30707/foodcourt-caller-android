@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import org.json.JSONArray
 import org.json.JSONObject
+import kr.sehotech.foodcourtcaller.BuildConfig
 import kr.sehotech.foodcourtcaller.terminal.KeyCodes
 
 /**
@@ -28,8 +29,9 @@ class AppSettings(context: Context) {
 
     // ───────── 공통 ─────────
 
+    /** 방송 전용 앱(speaker)은 항상 방송용 */
     var role: String?
-        get() = p.getString("role", null)
+        get() = if (BuildConfig.SPEAKER_ONLY) ROLE_SERVER else p.getString("role", null)
         set(v) = p.edit().putString("role", v).apply()
 
     // ───────── 매장용 ─────────
@@ -119,6 +121,21 @@ class AppSettings(context: Context) {
         get() = p.getBoolean("chime", true)
         set(v) = putBool("chime", v)
 
+    /** 영업시간 음악 자동 켜기/끄기 */
+    var musicAutoEnabled: Boolean
+        get() = p.getBoolean("musicAuto", false)
+        set(v) = putBool("musicAuto", v)
+
+    /** 음악 켜는 시각(하루 중 분), 기본 10:30 */
+    var musicOnMin: Int
+        get() = p.getInt("musicOnMin", 10 * 60 + 30).coerceIn(0, 1439)
+        set(v) = putInt("musicOnMin", v.coerceIn(0, 1439))
+
+    /** 음악 끄는 시각(하루 중 분), 기본 21:00 */
+    var musicOffMin: Int
+        get() = p.getInt("musicOffMin", 21 * 60).coerceIn(0, 1439)
+        set(v) = putInt("musicOffMin", v.coerceIn(0, 1439))
+
     /** 앞 무음(ms). 블루투스에서 앞부분 잘림 방지 */
     var preSilenceMs: Int
         get() = p.getInt("preSilenceMs", 500).coerceIn(0, 3000)
@@ -163,11 +180,5 @@ class AppSettings(context: Context) {
     }.toString()
 
     /** "192.168.0.23" → "192.168.0.23:8080", "http://…/" 같은 앞뒤 문자 제거 */
-    fun normalizeAddress(raw: String): String {
-        var s = raw.trim().removePrefix("http://").removePrefix("https://").trimEnd('/')
-        if (s.isEmpty()) return ""
-        val hasPort = if (s.startsWith("[")) s.contains("]:") else s.count { it == ':' } == 1
-        if (!hasPort) s = "$s:${Protocol.DEFAULT_PORT}"
-        return s
-    }
+    fun normalizeAddress(raw: String): String = AddressRules.normalize(raw)
 }

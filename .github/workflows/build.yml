@@ -56,27 +56,36 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew assembleRelease --no-daemon
+        run: ./gradlew assembleFullRelease assembleSpeakerRelease --no-daemon
 
       - name: APK 이름 고정·서명 확인
         run: |
-          cp app/build/outputs/apk/release/app-release.apk foodcourt-caller.apk
+          # foodcourt-caller.apk: 매장용·방송용 겸용 / foodcourt-caller-speaker.apk: 방송 전용(접근성 없음)
+          cp app/build/outputs/apk/full/release/app-full-release.apk foodcourt-caller.apk
+          cp app/build/outputs/apk/speaker/release/app-speaker-release.apk foodcourt-caller-speaker.apk
           rm -f "$RUNNER_TEMP/release.keystore"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
           echo "apksigner: $APKSIGNER"
-          "$APKSIGNER" verify --print-certs foodcourt-caller.apk > certs.txt
-          grep -E "certificate (DN|SHA-256)" certs.txt || cat certs.txt
-          rm -f certs.txt
+          for f in foodcourt-caller.apk foodcourt-caller-speaker.apk; do
+            echo "== $f"
+            "$APKSIGNER" verify --print-certs "$f" > certs.txt
+            grep -E "certificate (DN|SHA-256)" certs.txt || cat certs.txt
+            rm -f certs.txt
+          done
 
       - name: 산출물 업로드
         uses: actions/upload-artifact@v4
         with:
           name: foodcourt-caller-apk
-          path: foodcourt-caller.apk
+          path: |
+            foodcourt-caller.apk
+            foodcourt-caller-speaker.apk
 
       - name: GitHub Release 만들기
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: foodcourt-caller.apk
+          files: |
+            foodcourt-caller.apk
+            foodcourt-caller-speaker.apk
           generate_release_notes: true
