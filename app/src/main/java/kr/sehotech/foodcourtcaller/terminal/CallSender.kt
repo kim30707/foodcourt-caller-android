@@ -157,6 +157,43 @@ object CallSender {
         }
     }
 
+    /** 1분마다: 이 태블릿 상태를 방송 장치에 알린다(원격 관리 화면에 표시). 실패해도 조용히 넘어간다. */
+    fun heartbeat(context: Context, accessibility: Boolean) {
+        val app = context.applicationContext
+        val settings = AppSettings(app)
+        val address = settings.serverAddress
+        if (address.isBlank()) return
+        executor.execute {
+            try {
+                val pm = app.getSystemService(android.os.PowerManager::class.java)
+                val body = JSONObject().apply {
+                    put("store", settings.storeName)
+                    put("device", settings.effectiveDeviceName)
+                    put("version", kr.sehotech.foodcourtcaller.BuildConfig.VERSION_NAME)
+                    put("accessibility", accessibility)
+                    put("battery", pm.isIgnoringBatteryOptimizations(app.packageName))
+                    put("lastSend", settings.recentSends.firstOrNull() ?: "")
+                }.toString()
+                val conn = (URL("http://$address/heartbeat").openConnection() as HttpURLConnection).apply {
+                    connectTimeout = TIMEOUT_MS
+                    readTimeout = TIMEOUT_MS
+                    requestMethod = "POST"
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                    if (settings.terminalToken.isNotBlank()) setRequestProperty(Protocol.HEADER_TOKEN, settings.terminalToken)
+                }
+                try {
+                    conn.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+                    conn.responseCode
+                } finally {
+                    conn.disconnect()
+                }
+            } catch (e: Exception) {
+                Log.d(TAG, "상태 신호 실패: ${e.message}")
+            }
+        }
+    }
+
     /** GET 요청. 실패하면 null. 메인 스레드에서 부르지 않는다. */
     fun get(address: String, path: String): String? = try {
         val conn = (URL("http://$address$path").openConnection() as HttpURLConnection).apply {

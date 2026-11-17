@@ -80,6 +80,8 @@ class BroadcastService : Service() {
     lateinit var callLog: CallLog
         private set
     val queue = CallQueue()
+    val devices = DeviceRegistry()
+    private val pinGuard = PinGuard()
 
     var startedAt = 0L
         private set
@@ -376,6 +378,7 @@ class BroadcastService : Service() {
             announcer.init()
         }
         if (worker?.isAlive != true) startWorker()
+        kr.sehotech.foodcourtcaller.common.UpdateChecker.periodicCheck(this)
         val now = System.currentTimeMillis()
         if (now - lastPrune > 60 * 60 * 1000L) {
             callLog.prune(now)
@@ -501,6 +504,127 @@ class BroadcastService : Service() {
         return JSONObject().put("entries", arr).toString()
     }
 
+    // ───────── 원격 관리(/admin, PIN 필요) ─────────
+
+    /** PIN 확인. 통과하면 null, 아니면 오류 응답 */
+    fun adminAuth(pin: String?): HttpResultJson? = when (pinGuard.check(settings.adminPin, pin)) {
+        PinGuard.Check.OK -> null
+        PinGuard.Check.NOT_SET -> HttpResultJson(403, JSONObject().put("ok", false).put("error", "pin_not_set").toString())
+        PinGuard.Check.WRONG -> HttpResultJson(401, JSONObject().put("ok", false).put("error", "wrong_pin").toString())
+        PinGuard.Check.LOCKED -> HttpResultJson(401, JSONObject().put("ok", false).put("error", "locked").toString())
+    }
+
+    data class HttpResultJson(val status: Int, val body: String)
+
+    fun adminState(): String {
+        val fmt = java.text.SimpleDateFormat("MM-dd HH:mm:ss", java.util.Locale.KOREA)
+        val all = callLog.recent(200)
+        val latest = kr.sehotech.foodcourtcaller.common.UpdateChecker.latestKnown
+        return JSONObject().apply {
+            put("ok", true)
+            put("address", addressText())
+            put("version", BuildConfig.VERSION_NAME)
+            put("latest", latest ?: JSONObject.NULL)
+            put("uptimeSec", (System.currentTimeMillis() - startedAt) / 1000)
+            put("queue", queue.size)
+            put("tts", announcer.state.code)
+            put("ttsLabel", announcer.state.label)
+            put("devices", devices.toJson(latest))
+            put("stores", JSONArray().apply { settings.stores.filter { it.enabled }.forEach { put(it.name) } })
+            put("sound", JSONObject().apply {
+                put("volume", settings.volume)
+                put("voiceBoost", settings.voiceBoost)
+                put("speechRate", settings.speechRatePercent)
+                put("repeat", settings.repeatCount)
+                put("chime", settings.chimeEnabled)
+            })
+            put("music", JSONObject().apply {
+                put("auto", settings.musicAutoEnabled)
+                put("on", MusicSchedule.format(settings.musicOnMin))
+                put("off", MusicSchedule.format(settings.musicOffMin))
+                put("last", musicLastText)
+            })
+            put("events", JSONArray().apply {
+                all.filter { it.source == "system" }.take(30).forEach {
+                    put(JSONObject().put("time", fmt.format(java.util.Date(it.time))).put("result", it.result).put("note", it.note))
+                }
+            })
+            put("calls", JSONArray().apply {
+                all.filter { it.source != "system" }.take(20).forEach {
+                    put(
+                        JSONObject().put("time", fmt.format(java.util.Date(it.time))).put("store", it.store)
+                            .put("what", if (it.test) "테스트" else "${it.number}번 · ${it.source}")
+                            .put("result", WebPages.resultText(it.result) + if (it.note.isNotEmpty()) " (${it.note})" else ""),
+                    )
+                }
+            })
+        }.toString()
+    }
+
+    fun adminSettings(body: String): HttpResultJson {
+        val o = try { JSONObject(body) } catch (e: Exception) {
+            return HttpResultJson(400, JSONObject().put("ok", false).put("error", "bad_request").toString())
+        }
+        if (o.has("volume")) settings.volume = o.optInt("volume")
+        if (o.has("voiceBoost")) settings.voiceBoost = o.optInt("voiceBoost")
+        if (o.has("speechRate")) settings.speechRatePercent = o.optInt("speechRate")
+        if (o.has("repeat")) settings.repeatCount = o.optInt("repeat")
+        if (o.has("chime")) settings.chimeEnabled = o.optBoolean("chime")
+        var message = "저장했습니다"
+        if (o.has("musicOn") || o.has("musicOff")) {
+            val on = MusicSchedule.parse(o.optString("musicOn"))
+            val off = MusicSchedule.parse(o.optString("musicOff"))
+            if (on == null || off == null || on == off) {
+                return HttpResultJson(400, JSONObject().put("ok", false).put("error", "시각을 10:30 처럼 넣어 주세요").toString())
+            }
+            settings.musicOnMin = on
+            settings.musicOffMin = off
+            if (o.has("musicAuto")) settings.musicAutoEnabled = o.optBoolean("musicAuto")
+            message = if (settings.musicAutoEnabled) "매일 ${MusicSchedule.format(on)} 켜기 / ${MusicSchedule.format(off)} 끄기" else "저장(자동 사용 꺼짐)"
+        } else if (o.has("musicAuto")) {
+            settings.musicAutoEnabled = o.optBoolean("musicAuto")
+        }
+        logEvent("admin", "원격 설정 변경")
+        return HttpResultJson(200, JSONObject().put("ok", true).put("message", message).toString())
+    }
+
+    fun adminAction(body: String): HttpResultJson {
+        val o = try { JSONObject(body) } catch (e: Exception) { JSONObject() }
+        val message = when (o.optString("action")) {
+            "test" -> {
+                val r = enqueue(CallRequest(o.optString("store"), null, Protocol.SOURCE_APP, "원격 관리", true))
+                if (r.body.ok) "테스트 방송을 보냈습니다" else "실패: ${r.body.error}"
+            }
+            "restart" -> {
+                main.postDelayed({ restartAll("원격 관리에서 다시 시작") }, 800)
+                "다시 시작합니다(몇 초 뒤 새로고침)"
+            }
+            "music_on" -> { main.post { musicNow(true, "원격") }; "음악 켜기 신호를 보냈습니다" }
+            "music_off" -> { main.post { musicNow(false, "원격") }; "음악 끄기 신호를 보냈습니다" }
+            "check_update" -> {
+                main.post {
+                    kr.sehotech.foodcourtcaller.common.UpdateChecker.check { l, text ->
+                        logEvent("update", text)
+                        if (l != null) kr.sehotech.foodcourtcaller.common.UpdateChecker.notifyUpdate(this, l.version)
+                    }
+                }
+                "확인 중입니다. 새 버전이 있으면 방송 장치에 알림이 뜹니다"
+            }
+            else -> return HttpResultJson(400, JSONObject().put("ok", false).put("error", "unknown_action").toString())
+        }
+        return HttpResultJson(200, JSONObject().put("ok", true).put("message", message).toString())
+    }
+
+    fun handleHeartbeat(body: String, token: String?, ip: String): HttpResultJson {
+        val need = settings.token
+        if (need.isNotBlank() && token != need) {
+            return HttpResultJson(401, CallResponse(ok = false, error = Protocol.ERR_BAD_TOKEN).toJson())
+        }
+        val ok = devices.update(body, ip)
+        val latest = kr.sehotech.foodcourtcaller.common.UpdateChecker.latestKnown
+        return HttpResultJson(if (ok) 200 else 400, JSONObject().put("ok", ok).put("latest", latest ?: JSONObject.NULL).toString())
+    }
+
     fun statusPage(): String = WebPages.statusPage(
         address = addressText(),
         version = BuildConfig.VERSION_NAME,
@@ -529,6 +653,7 @@ class CallHttpServer(port: Int, private val svc: BroadcastService) : NanoHTTPD(p
         200 -> Response.Status.OK
         400 -> Response.Status.BAD_REQUEST
         401 -> Response.Status.UNAUTHORIZED
+        403 -> Response.Status.FORBIDDEN
         404 -> Response.Status.NOT_FOUND
         else -> Response.Status.INTERNAL_ERROR
     }
@@ -550,6 +675,26 @@ class CallHttpServer(port: Int, private val svc: BroadcastService) : NanoHTTPD(p
                 val token = session.headers[Protocol.HEADER_TOKEN.lowercase()]
                 val r = svc.handleCall(body, token)
                 json(r.status, r.body.toJson())
+            }
+
+            method == Method.POST && uri == "/heartbeat" -> {
+                val body = readBody(session) ?: return json(400, CallResponse(ok = false, error = Protocol.ERR_BAD_REQUEST).toJson())
+                val r = svc.handleHeartbeat(body, session.headers[Protocol.HEADER_TOKEN.lowercase()], session.remoteIpAddress ?: "")
+                json(r.status, r.body)
+            }
+
+            method == Method.GET && (uri == "/admin" || uri == "/admin/") -> html(200, AdminPage.html)
+            uri.startsWith("/admin/api/") -> {
+                svc.adminAuth(session.headers["x-admin-pin"])?.let { return json(it.status, it.body) }
+                val r = when {
+                    method == Method.GET && uri == "/admin/api/state" -> BroadcastService.HttpResultJson(200, svc.adminState())
+                    method == Method.POST && uri == "/admin/api/settings" ->
+                        svc.adminSettings(readBody(session) ?: "{}")
+                    method == Method.POST && uri == "/admin/api/action" ->
+                        svc.adminAction(readBody(session) ?: "{}")
+                    else -> BroadcastService.HttpResultJson(404, JSONObject().put("ok", false).put("error", Protocol.ERR_NOT_FOUND).toString())
+                }
+                json(r.status, r.body)
             }
 
             method == Method.GET && uri == "/status" -> json(200, svc.statusJson())

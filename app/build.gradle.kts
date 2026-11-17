@@ -82,6 +82,10 @@ android {
 dependencies {
     // 방송 폰의 가벼운 내장 HTTP 서버
     implementation("org.nanohttpd:nanohttpd:2.3.1")
+    // 업데이트 설치 파일 공유(FileProvider)
+    implementation("androidx.core:core:1.13.1")
 
     testImplementation("junit:junit:4.13.2")
+    // 단위 테스트에서 실제 JSON 처리(안드로이드 기본 스텁 대신)
+    testImplementation("org.json:json:20240303")
 }

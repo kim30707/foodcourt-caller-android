@@ -126,6 +126,16 @@ class AppSettings(context: Context) {
         get() = p.getBoolean("chime", true)
         set(v) = putBool("chime", v)
 
+    /** 원격 관리 페이지(/admin) PIN. 비어 있으면 원격 관리 꺼짐 */
+    var adminPin: String
+        get() = str("adminPin", "")
+        set(v) = putStr("adminPin", v.trim())
+
+    /** 마지막 업데이트 확인 시각 */
+    var lastUpdateCheck: Long
+        get() = p.getLong("lastUpdateCheck", 0L)
+        set(v) = p.edit().putLong("lastUpdateCheck", v).apply()
+
     /** 영업시간 음악 자동 켜기/끄기 */
     var musicAutoEnabled: Boolean
         get() = p.getBoolean("musicAuto", false)

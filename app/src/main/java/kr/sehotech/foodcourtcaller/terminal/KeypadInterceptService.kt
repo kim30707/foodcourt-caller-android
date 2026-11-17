@@ -61,6 +61,19 @@ class KeypadInterceptService : AccessibilityService() {
     private lateinit var banner: OverlayBanner
     private val timeoutRunnable = Runnable { onTimeoutCheck() }
 
+    /** 1분마다 방송 장치에 상태 신호, 6시간마다 업데이트 확인 */
+    private val heartbeatRunnable = object : Runnable {
+        override fun run() {
+            try {
+                CallSender.heartbeat(this@KeypadInterceptService, accessibility = true)
+                kr.sehotech.foodcourtcaller.common.UpdateChecker.periodicCheck(this@KeypadInterceptService)
+            } catch (e: Exception) {
+                Log.w(TAG, "상태 신호 오류", e)
+            }
+            handler.postDelayed(this, 60_000)
+        }
+    }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         settings = AppSettings(this)
@@ -68,6 +81,7 @@ class KeypadInterceptService : AccessibilityService() {
         loadConfig()
         instance = this
         connected = true
+        handler.postDelayed(heartbeatRunnable, 5_000)
         Log.i(TAG, "키 가로채기 시작")
     }
 

@@ -74,6 +74,34 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         settings = AppSettings(this)
         render()
+        handleUpdateIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        handleUpdateIntent(intent)
+    }
+
+    /** 업데이트 알림을 누르고 들어온 경우: 바로 받아서 설치 화면을 띄운다 */
+    private fun handleUpdateIntent(intent: Intent?) {
+        if (intent?.action != kr.sehotech.foodcourtcaller.common.UpdateChecker.ACTION_UPDATE) return
+        intent.action = null
+        startUpdate { toast(it) }
+    }
+
+    private fun startUpdate(progress: (String) -> Unit) {
+        progress("새 버전 확인 중…")
+        kr.sehotech.foodcourtcaller.common.UpdateChecker.check { latest, text ->
+            if (latest == null) progress(text)
+            else kr.sehotech.foodcourtcaller.common.UpdateChecker.downloadAndInstall(this, latest, progress)
+        }
+    }
+
+    private fun LinearLayout.updateSection() {
+        val c = section("앱 업데이트")
+        c.label("지금 버전 ${BuildConfig.VERSION_NAME}. 새 버전이 있으면 받아서 설치 화면을 띄웁니다. 처음 한 번은 '이 출처 허용'을 켜야 합니다.", 13f, color = Color.GRAY)
+        val st = c.label("", 15f, bold = true)
+        c.button("업데이트 확인·설치") { startUpdate { st.text = it } }
     }
 
     override fun onResume() {
@@ -425,6 +453,8 @@ class MainActivity : Activity() {
         keyCheck.label("키패드 키를 누르면 아래에 키 이름이 나옵니다. 아무것도 안 나오면 3번이 꺼져 있거나 키패드 연결을 확인하세요.", 13f, color = Color.GRAY)
         val keyList = keyCheck.label("", 14f)
 
+        page.updateSection()
+
         // ── 고급 설정(접힘) ──
         val advWrap = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = View.GONE }
         page.button("고급 설정 보기/숨기기") { advWrap.visibility = if (advWrap.visibility == View.GONE) View.VISIBLE else View.GONE }
@@ -516,6 +546,7 @@ class MainActivity : Activity() {
         // 화면을 열면 바로 연결을 확인한다(주소가 없으면 자동으로 찾는다)
         s2.status.tag = if (settings.serverAddress.isBlank()) "방송 장치를 찾는 중…" else "연결 확인 중…"
         checkConnection(discoverFirst = false)
+        CallSender.heartbeat(this, KeypadInterceptService.connected)
     }
 
     // ───────── 방송용 설정 ─────────
@@ -643,6 +674,28 @@ class MainActivity : Activity() {
             } else "자동 사용 안 함"
             muState.text = if (last.isEmpty()) plan else "$plan\n최근: $last"
         }
+
+        // 원격 관리
+        val ra = page.section("원격 관리")
+        ra.label("같은 와이파이(또는 Tailscale로 연결된 휴대폰)의 브라우저에서 아래 주소로 들어가 상태 확인·설정 변경·테스트 방송을 할 수 있습니다. PIN을 정해야 켜집니다.", 13f, color = Color.GRAY)
+        val raAddr = ra.label("", 17f, bold = true)
+        refreshers += {
+            val a = BroadcastService.instance?.addressText()
+            raAddr.text = if (settings.adminPin.isBlank()) "꺼짐 — PIN을 정하세요" else "http://${a ?: "…"}/admin"
+            raAddr.setTextColor(Color.parseColor(if (settings.adminPin.isBlank()) "#C62828" else "#1F4E79"))
+        }
+        ra.label("관리 PIN(숫자 4~8자리 권장)", 13f, color = Color.GRAY)
+        val pinEdit = ra.edit("예: 4827", settings.adminPin, InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD)
+        ra.button("PIN 저장") {
+            val pin = pinEdit.text.toString().trim()
+            if (pin.isNotEmpty() && pin.length < 4) {
+                toast("4자리 이상으로 정하세요"); return@button
+            }
+            settings.adminPin = pin
+            toast(if (pin.isEmpty()) "원격 관리를 껐습니다" else "저장했습니다. 주소로 들어가 PIN을 넣으세요")
+        }
+
+        page.updateSection()
 
         // 서버 설정
         val net = page.section("서버")

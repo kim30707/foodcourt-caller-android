@@ -53,3 +53,37 @@ class AddressAndMusicTest {
         assertTrue(MusicSchedule.isOpen(1 * 60, 18 * 60, 2 * 60)) // 새벽까지 영업
     }
 }
+
+class RemoteAdminTest {
+    @Test
+    fun versions() {
+        assertTrue(Versions.isNewer("v0.3.0", "0.2.1"))
+        assertTrue(Versions.isNewer("0.10.0", "0.9.9"))
+        assertFalse(Versions.isNewer("0.2.1", "0.2.1"))
+        assertFalse(Versions.isNewer("0.2.0", "0.2.1"))
+        assertTrue(Versions.isNewer("1.0", "0.0.42"))
+    }
+
+    @Test
+    fun pinGuardLocksAfterFiveFails() {
+        val g = kr.sehotech.foodcourtcaller.server.PinGuard()
+        assertEquals(kr.sehotech.foodcourtcaller.server.PinGuard.Check.NOT_SET, g.check("", "1"))
+        assertEquals(kr.sehotech.foodcourtcaller.server.PinGuard.Check.OK, g.check("4827", "4827", 0))
+        repeat(4) { assertEquals(kr.sehotech.foodcourtcaller.server.PinGuard.Check.WRONG, g.check("4827", "0000", 0)) }
+        assertEquals(kr.sehotech.foodcourtcaller.server.PinGuard.Check.LOCKED, g.check("4827", "0000", 0))
+        // 잠긴 동안은 맞는 PIN도 거절
+        assertEquals(kr.sehotech.foodcourtcaller.server.PinGuard.Check.LOCKED, g.check("4827", "4827", 1000))
+        assertEquals(kr.sehotech.foodcourtcaller.server.PinGuard.Check.OK, g.check("4827", "4827", 6 * 60 * 1000))
+    }
+
+    @Test
+    fun registryMarksOutdatedAndOffline() {
+        val r = kr.sehotech.foodcourtcaller.server.DeviceRegistry()
+        assertTrue(r.update("""{"store":"하즈벤","device":"하즈벤 태블릿","version":"0.2.1","accessibility":true,"battery":true}""", "192.168.0.38", 0))
+        assertFalse(r.update("not json", "x", 0))
+        val a = r.toJson("0.3.0", now = 4 * 60 * 1000)
+        assertEquals(1, a.length())
+        assertTrue(a.getJSONObject(0).getBoolean("outdated"))
+        assertFalse(a.getJSONObject(0).getBoolean("online"))
+    }
+}
