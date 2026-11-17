@@ -33,7 +33,9 @@ input[type=range]{width:100%}
 <div id="main" style="display:none">
 <div class="card"><h2>방송 장치</h2><div id="dev"></div>
 <button onclick="act('restart')">서버 다시 시작</button>
-<button onclick="act('check_update')" class="gray">업데이트 확인</button></div>
+<button onclick="act('check_update')" class="gray">업데이트 확인</button>
+<button onclick="logout()" class="gray">이 휴대폰에서 로그아웃</button>
+<p class="mut">PIN은 이 휴대폰에 저장되어 다음부터 바로 열립니다. 홈 화면에 추가해 두면 앱처럼 쓸 수 있습니다.</p></div>
 
 <div class="card"><h2>매장 태블릿</h2>
 <p class="mut">태블릿이 1분마다 신호를 보냅니다. 3분 넘게 신호가 없으면 빨간색입니다.</p>
@@ -65,7 +67,7 @@ input[type=range]{width:100%}
 
 <script>
 var PIN='';
-try{PIN=sessionStorage.getItem('pin')||'';}catch(e){}
+try{PIN=localStorage.getItem('pin')||sessionStorage.getItem('pin')||'';}catch(e){}
 function val(id){return document.getElementById(id).value;}
 function el(id){return document.getElementById(id);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -76,7 +78,9 @@ function api(path,body){
    .then(function(r){return r.json().then(function(j){if(!r.ok)throw j;return j;});});
 }
 function errText(j){return {pin_not_set:'방송 장치 앱에서 관리 PIN을 먼저 정하세요',wrong_pin:'PIN이 틀렸습니다',locked:'5번 틀려서 5분 동안 잠겼습니다'}[j&&j.error]||('오류: '+(j&&j.error||'연결 안 됨'));}
-function login(){PIN=val('pin');try{sessionStorage.setItem('pin',PIN);}catch(e){}load(true);}
+function savePin(p){try{if(p)localStorage.setItem('pin',p);else localStorage.removeItem('pin');sessionStorage.removeItem('pin');}catch(e){}}
+function login(){PIN=val('pin');savePin(PIN);load(true);}
+function logout(){PIN='';savePin('');el('pin').value='';el('login').style.display='block';el('main').style.display='none';msg('로그아웃했습니다');}
 function ago(s){return s<60?s+'초 전':s<3600?Math.floor(s/60)+'분 전':Math.floor(s/3600)+'시간 전';}
 var filled=false;
 function load(first){
@@ -104,8 +108,11 @@ function load(first){
     el('events').innerHTML=j.events.map(function(e){return '<tr><td class="mut">'+esc(e.time)+'</td><td>'+esc(e.result)+'</td><td>'+esc(e.note)+'</td></tr>';}).join('')||'<tr><td class="mut">기록 없음</td></tr>';
     el('calls').innerHTML=j.calls.map(function(e){return '<tr><td class="mut">'+esc(e.time)+'</td><td>'+esc(e.store)+'</td><td>'+esc(e.what)+'</td><td>'+esc(e.result)+'</td></tr>';}).join('')||'<tr><td class="mut">기록 없음</td></tr>';
   }).catch(function(e){
+    var err=e&&e.error;
+    if(!first&&!err){msg('방송 장치에 잠시 연결 안 됨 · 다시 시도 중');return;}
+    if(err==='wrong_pin'||err==='pin_not_set'){PIN='';savePin('');}
     el('login').style.display='block';el('main').style.display='none';
-    if(first||PIN)msg(errText(e));
+    if(first||err)msg(errText(e));
   });
 }
 function act(a,extra){var b=extra||{};b.action=a;api('/admin/api/action',b).then(function(j){msg(j.message||'완료');setTimeout(load,1500);}).catch(function(e){msg(errText(e));});}
@@ -113,5 +120,6 @@ function saveSound(){api('/admin/api/settings',{volume:+val('volume'),voiceBoost
 function saveMusic(){api('/admin/api/settings',{musicAuto:el('musicAuto').checked,musicOn:val('musicOn'),musicOff:val('musicOff')}).then(function(j){msg(j.message||'저장');}).catch(function(e){msg(errText(e));});}
 if(PIN)load(true);
 setInterval(function(){if(el('main').style.display!=='none')load(false);},10000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&PIN)load(false);});
 </script></body></html>"""
 }

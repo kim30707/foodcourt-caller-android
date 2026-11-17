@@ -57,6 +57,11 @@ class AppSettings(context: Context) {
         get() = str("serverAddress", "")
         set(v) = putStr("serverAddress", normalizeAddress(v))
 
+    /** 사용자가 [연결 끊기]를 누르면 false. 그 전까지는 주소가 바뀌어도 스스로 다시 찾아 붙는다. */
+    var autoConnect: Boolean
+        get() = p.getBoolean("autoConnect", true)
+        set(v) = putBool("autoConnect", v)
+
     /** 방송 장치에 토큰이 설정되어 있을 때만 필요 */
     var terminalToken: String
         get() = str("terminalToken", "")

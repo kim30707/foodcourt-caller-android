@@ -392,15 +392,32 @@ class MainActivity : Activity() {
                 if (found) settings.serverAddress = addr
                 val ok = text.startsWith("연결됨")
                 connectOk = ok
-                s2.status.tag = if (ok) "연결됨 · $addr" else
+                if (ok) settings.autoConnect = true
+                s2.status.tag = if (ok) "연결됨 · $addr (저장됨 — 다음부터 자동 연결)" else
                     "연결 안 됨 — 방송 장치가 켜져 있는지, 같은 와이파이인지 확인하세요"
                 toast(if (ok) "방송 장치와 연결됨" else "연결 안 됨")
             }
         }
         bigButton(s2.body, "방송 장치 찾기·연결 확인") {
+            settings.autoConnect = true
             s2.status.tag = "찾는 중…(최대 10초)"
             connectOk = null
             checkConnection(discoverFirst = false)
+        }
+        s2.body.label("한 번 연결되면 저장됩니다. 태블릿을 껐다 켜거나 방송 장치 주소가 바뀌어도 스스로 다시 연결합니다.", 13f, color = Color.GRAY)
+        s2.body.button("연결 끊기") {
+            AlertDialog.Builder(this)
+                .setTitle("연결을 끊을까요?")
+                .setMessage("이 태블릿은 방송을 보내지 않고, 자동으로 다시 연결하지도 않습니다. 다시 쓰려면 [방송 장치 찾기·연결 확인]을 누르세요.")
+                .setPositiveButton("끊기") { _, _ ->
+                    settings.autoConnect = false
+                    settings.serverAddress = ""
+                    connectOk = false
+                    s2.status.tag = "연결 끊음 — 다시 쓰려면 [방송 장치 찾기·연결 확인]"
+                    toast("연결을 끊었습니다")
+                }
+                .setNegativeButton("취소", null)
+                .show()
         }
         // 직접 입력(자동 찾기가 안 될 때)
         val manual = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = View.GONE }
@@ -409,6 +426,7 @@ class MainActivity : Activity() {
         manual.label("방송 장치 화면 맨 위의 주소(예: 192.168.0.44:8080)", 13f, color = Color.GRAY)
         val addrEdit = manual.edit("예: 192.168.0.44:8080", settings.serverAddress, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
         manual.button("이 주소로 저장·확인") {
+            settings.autoConnect = true
             settings.serverAddress = addrEdit.text.toString()
             addrEdit.setText(settings.serverAddress)
             s2.status.tag = "확인 중…"
@@ -544,8 +562,13 @@ class MainActivity : Activity() {
         }
 
         // 화면을 열면 바로 연결을 확인한다(주소가 없으면 자동으로 찾는다)
-        s2.status.tag = if (settings.serverAddress.isBlank()) "방송 장치를 찾는 중…" else "연결 확인 중…"
-        checkConnection(discoverFirst = false)
+        if (settings.serverAddress.isBlank() && !settings.autoConnect) {
+            connectOk = false
+            s2.status.tag = "연결 끊음 — 다시 쓰려면 [방송 장치 찾기·연결 확인]"
+        } else {
+            s2.status.tag = if (settings.serverAddress.isBlank()) "방송 장치를 찾는 중…" else "연결 확인 중…"
+            checkConnection(discoverFirst = false)
+        }
         CallSender.heartbeat(this, KeypadInterceptService.connected)
     }
 

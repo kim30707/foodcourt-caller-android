@@ -94,7 +94,8 @@ object CallSender {
                 if (r != null) return r
             }
         }
-        // 다시 찾기
+        // 다시 찾기([연결 끊기]를 누른 상태면 찾지 않는다)
+        if (!settings.autoConnect) return Result.Unreachable
         val found = discover(context)
         if (found != null) {
             if (found != address) {
@@ -157,13 +158,38 @@ object CallSender {
         }
     }
 
-    /** 1분마다: 이 태블릿 상태를 방송 장치에 알린다(원격 관리 화면에 표시). 실패해도 조용히 넘어간다. */
+    @Volatile
+    private var heartbeatFails = 0
+
+    /**
+     * 1분마다: 이 태블릿 상태를 방송 장치에 알린다(원격 관리 화면에 표시).
+     * 두 번 연속 안 닿으면(방송 장치 주소가 바뀐 경우 등) 스스로 다시 찾아 저장한다.
+     * 사용자가 [연결 끊기]를 누른 뒤(주소 비움)에는 다시 찾지 않는다.
+     */
     fun heartbeat(context: Context, accessibility: Boolean) {
         val app = context.applicationContext
         val settings = AppSettings(app)
         val address = settings.serverAddress
         if (address.isBlank()) return
         executor.execute {
+            val ok = sendHeartbeat(app, settings, address, accessibility)
+            if (ok) {
+                heartbeatFails = 0
+                return@execute
+            }
+            if (++heartbeatFails < 2 || !settings.autoConnect) return@execute
+            val found = discover(app)
+            if (found != null && settings.serverAddress.isNotBlank()) {
+                if (found != settings.serverAddress) {
+                    Log.i(TAG, "방송 장치 주소 자동 갱신: ${settings.serverAddress} → $found")
+                    settings.serverAddress = found
+                }
+                if (sendHeartbeat(app, settings, found, accessibility)) heartbeatFails = 0
+            }
+        }
+    }
+
+    private fun sendHeartbeat(app: Context, settings: AppSettings, address: String, accessibility: Boolean): Boolean {
             try {
                 val pm = app.getSystemService(android.os.PowerManager::class.java)
                 val body = JSONObject().apply {
@@ -184,14 +210,14 @@ object CallSender {
                 }
                 try {
                     conn.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
-                    conn.responseCode
+                    return conn.responseCode in 200..499
                 } finally {
                     conn.disconnect()
                 }
             } catch (e: Exception) {
                 Log.d(TAG, "상태 신호 실패: ${e.message}")
+                return false
             }
-        }
     }
 
     /** GET 요청. 실패하면 null. 메인 스레드에서 부르지 않는다. */
