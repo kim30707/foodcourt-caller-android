@@ -63,6 +63,7 @@ object CallSender {
         val settings = AppSettings(app)
         val key = if (test) "test" else number.orEmpty()
         val now = System.currentTimeMillis()
+        lastSendAt = now
         synchronized(lastSentAt) {
             val last = lastSentAt[key]
             if (!test && last != null && now - last < LOCAL_DEDUP_MS) {
@@ -161,6 +162,43 @@ object CallSender {
     @Volatile
     private var heartbeatFails = 0
 
+    /** 마지막으로 호출을 보낸 시각(방송 중에는 업데이트하지 않으려고) */
+    @Volatile
+    var lastSendAt = 0L
+        private set
+
+    /** 방송 장치에서 [모든 태블릿 지금 업데이트]를 받았는지 */
+    @Volatile
+    private var forcePending = false
+
+    /** 한 번 읽으면 지워진다 */
+    fun takeForceUpdate(): Boolean {
+        val f = forcePending
+        forcePending = false
+        return f
+    }
+
+    /** 방송 장치의 답: 업데이트 시간, 공통 설정, 지금 업데이트 요청을 반영한다 */
+    private fun applyHeartbeatAnswer(settings: AppSettings, text: String) {
+        val o = try { JSONObject(text) } catch (e: Exception) { return }
+        val now = System.currentTimeMillis()
+        settings.lastServerContact = now
+        settings.serverAllowUntil = if (o.optBoolean("updateAllowed", false)) now + 3 * 60 * 1000L else 0L
+        val nonce = o.optLong("updateNonce", 0L)
+        if (nonce != 0L && nonce != settings.updateNonceSeen) {
+            settings.updateNonceSeen = nonce
+            forcePending = true
+        }
+        val c = o.optJSONObject("config") ?: return
+        val version = c.optLong("version", 0L)
+        if (version <= settings.remoteConfigVersion) return
+        val cfg = kr.sehotech.foodcourtcaller.common.TerminalConfig.fromJson(c) ?: return
+        cfg.applyTo(settings)
+        settings.remoteConfigVersion = version
+        Log.i(TAG, "방송 장치 공통 설정 적용: $cfg")
+        KeypadInterceptService.reloadConfig()
+    }
+
     /**
      * 1분마다: 이 태블릿 상태를 방송 장치에 알린다(원격 관리 화면에 표시).
      * 두 번 연속 안 닿으면(방송 장치 주소가 바뀐 경우 등) 스스로 다시 찾아 저장한다.
@@ -199,6 +237,9 @@ object CallSender {
                     put("accessibility", accessibility)
                     put("battery", pm.isIgnoringBatteryOptimizations(app.packageName))
                     put("lastSend", settings.recentSends.firstOrNull() ?: "")
+                    put("autoUpdate", kr.sehotech.foodcourtcaller.common.UpdateInstaller.mode(app).code)
+                    put("android", android.os.Build.VERSION.SDK_INT)
+                    put("configVersion", settings.remoteConfigVersion)
                 }.toString()
                 val conn = (URL("http://$address/heartbeat").openConnection() as HttpURLConnection).apply {
                     connectTimeout = TIMEOUT_MS
@@ -210,7 +251,12 @@ object CallSender {
                 }
                 try {
                     conn.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
-                    return conn.responseCode in 200..499
+                    val code = conn.responseCode
+                    if (code in 200..299) {
+                        val answer = conn.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                        applyHeartbeatAnswer(settings, answer)
+                    }
+                    return code in 200..499
                 } finally {
                     conn.disconnect()
                 }

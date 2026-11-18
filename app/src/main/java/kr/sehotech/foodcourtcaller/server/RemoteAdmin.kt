@@ -14,6 +14,10 @@ class DeviceRegistry {
         val lastSend: String,
         val ip: String,
         val lastSeen: Long,
+        /** 자동 업데이트 상태: device_owner / ready / setup / notify / "" */
+        val autoUpdate: String = "",
+        val android: Int = 0,
+        val configVersion: Long = 0,
     )
 
     private val map = LinkedHashMap<String, Info>()
@@ -31,6 +35,9 @@ class DeviceRegistry {
             lastSend = o.optString("lastSend"),
             ip = ip,
             lastSeen = now,
+            autoUpdate = o.optString("autoUpdate"),
+            android = o.optInt("android", 0),
+            configVersion = o.optLong("configVersion", 0),
         )
         true
     } catch (e: Exception) {
@@ -40,7 +47,7 @@ class DeviceRegistry {
     @Synchronized
     fun all(): List<Info> = map.values.sortedBy { it.store }
 
-    fun toJson(latest: String?, now: Long = System.currentTimeMillis()): JSONArray = JSONArray().apply {
+    fun toJson(latest: String?, configVersion: Long = 0, now: Long = System.currentTimeMillis()): JSONArray = JSONArray().apply {
         all().forEach {
             put(JSONObject().apply {
                 put("store", it.store)
@@ -53,6 +60,9 @@ class DeviceRegistry {
                 put("ip", it.ip)
                 put("agoSec", (now - it.lastSeen) / 1000)
                 put("online", now - it.lastSeen < 3 * 60 * 1000)
+                put("autoUpdate", it.autoUpdate)
+                put("android", it.android)
+                put("configApplied", configVersion == 0L || it.configVersion >= configVersion)
             })
         }
     }

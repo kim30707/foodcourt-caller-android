@@ -141,6 +141,68 @@ class AppSettings(context: Context) {
         get() = p.getLong("lastUpdateCheck", 0L)
         set(v) = p.edit().putLong("lastUpdateCheck", v).apply()
 
+    private fun putLong(key: String, v: Long) = p.edit().putLong(key, v).apply()
+
+    // ───────── 자동 업데이트(두 모드 공용) ─────────
+
+    /** 자동 설치를 마지막으로 시도한 버전과 시각(같은 버전을 계속 다시 시도하지 않게) */
+    var autoTriedVersion: String
+        get() = str("autoTriedVersion", "")
+        set(v) = putStr("autoTriedVersion", v)
+    var autoTriedAt: Long
+        get() = p.getLong("autoTriedAt", 0L)
+        set(v) = putLong("autoTriedAt", v)
+    var autoTryCount: Int
+        get() = p.getInt("autoTryCount", 0)
+        set(v) = putInt("autoTryCount", v)
+
+    /** 마지막 자동 업데이트 확인 시각 */
+    var autoLastCheck: Long
+        get() = p.getLong("autoLastCheck", 0L)
+        set(v) = putLong("autoLastCheck", v)
+
+    /** 자동 업데이트 결과(화면 표시용) */
+    var autoResultText: String
+        get() = str("autoResultText", "")
+        set(v) = putStr("autoResultText", v)
+
+    // ───────── 매장용: 방송 장치에서 받은 값 ─────────
+
+    /** 방송 장치가 "지금 업데이트해도 됨"이라고 한 마지막 시각 */
+    var serverAllowUntil: Long
+        get() = p.getLong("serverAllowUntil", 0L)
+        set(v) = putLong("serverAllowUntil", v)
+
+    /** 방송 장치와 마지막으로 상태 신호를 주고받은 시각 */
+    var lastServerContact: Long
+        get() = p.getLong("lastServerContact", 0L)
+        set(v) = putLong("lastServerContact", v)
+
+    /** 방송 장치의 [모든 태블릿 지금 업데이트] 번호. 바뀌면 바로 업데이트한다 */
+    var updateNonceSeen: Long
+        get() = p.getLong("updateNonceSeen", 0L)
+        set(v) = putLong("updateNonceSeen", v)
+
+    /** 방송 장치에서 받아 적용한 공통 설정 번호 */
+    var remoteConfigVersion: Long
+        get() = p.getLong("remoteConfigVersion", 0L)
+        set(v) = putLong("remoteConfigVersion", v)
+
+    // ───────── 방송용: 매장 태블릿 공통 설정 ─────────
+
+    /** 매장 태블릿에 내려 보낼 공통 설정(JSON). 비어 있으면 보내지 않는다 */
+    var terminalConfigJson: String
+        get() = str("terminalConfigJson", "")
+        set(v) = putStr("terminalConfigJson", v)
+    var terminalConfigVersion: Long
+        get() = p.getLong("terminalConfigVersion", 0L)
+        set(v) = putLong("terminalConfigVersion", v)
+
+    /** [모든 태블릿 지금 업데이트]를 누른 시각(0이면 없음) */
+    var updateNonce: Long
+        get() = p.getLong("updateNonce", 0L)
+        set(v) = putLong("updateNonce", v)
+
     /** 영업시간 음악 자동 켜기/끄기 */
     var musicAutoEnabled: Boolean
         get() = p.getBoolean("musicAuto", false)

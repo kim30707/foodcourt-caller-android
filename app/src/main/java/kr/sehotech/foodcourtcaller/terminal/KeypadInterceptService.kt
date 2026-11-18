@@ -61,12 +61,25 @@ class KeypadInterceptService : AccessibilityService() {
     private lateinit var banner: OverlayBanner
     private val timeoutRunnable = Runnable { onTimeoutCheck() }
 
-    /** 1분마다 방송 장치에 상태 신호, 6시간마다 업데이트 확인 */
+    /** 영업이 끝난 뒤(방송 장치가 알려 준 시간)에만 스스로 업데이트. 입력·방송 중에는 하지 않는다 */
+    private fun autoUpdateTick() {
+        val now = System.currentTimeMillis()
+        val c = java.util.Calendar.getInstance()
+        val nowMin = c.get(java.util.Calendar.HOUR_OF_DAY) * 60 + c.get(java.util.Calendar.MINUTE)
+        val allowed = kr.sehotech.foodcourtcaller.common.UpdateWindow.terminalAllows(
+            now, nowMin, settings.serverAllowUntil, settings.lastServerContact,
+        )
+        val force = CallSender.takeForceUpdate()
+        val idle = !parser.isArmed && now - CallSender.lastSendAt > 5 * 60 * 1000L
+        kr.sehotech.foodcourtcaller.common.UpdateChecker.autoTick(this, allowed, force = force, idle = idle || force)
+    }
+
+    /** 1분마다 방송 장치에 상태 신호, 업데이트 시간이면 업데이트 확인 */
     private val heartbeatRunnable = object : Runnable {
         override fun run() {
             try {
                 CallSender.heartbeat(this@KeypadInterceptService, accessibility = true)
-                kr.sehotech.foodcourtcaller.common.UpdateChecker.periodicCheck(this@KeypadInterceptService)
+                autoUpdateTick()
             } catch (e: Exception) {
                 Log.w(TAG, "상태 신호 오류", e)
             }

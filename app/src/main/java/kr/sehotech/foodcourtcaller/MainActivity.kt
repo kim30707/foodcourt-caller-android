@@ -98,10 +98,51 @@ class MainActivity : Activity() {
     }
 
     private fun LinearLayout.updateSection() {
+        val ui = kr.sehotech.foodcourtcaller.common.UpdateInstaller
         val c = section("앱 업데이트")
-        c.label("지금 버전 ${BuildConfig.VERSION_NAME}. 새 버전이 있으면 받아서 설치 화면을 띄웁니다. 처음 한 번은 '이 출처 허용'을 켜야 합니다.", 13f, color = Color.GRAY)
+        val modeLine = c.label("", 16f, bold = true)
+        val when_ = c.label("", 13f, color = Color.GRAY)
+        val lastLine = c.label("", 13f, color = Color.GRAY)
+        val setupBtn = c.button("자동 업데이트 켜기") {
+            ui.setupSelf(this@MainActivity) { toast(it) }
+        }
+        val releaseBtn = c.button("전용 기기 모드 해제") {
+            AlertDialog.Builder(this@MainActivity)
+                .setTitle("전용 기기 모드를 해제할까요?")
+                .setMessage("해제하면 자동 업데이트 때 [설치]를 눌러야 할 수 있습니다. 다시 켜려면 태블릿 초기화 후 컴퓨터로 설정해야 합니다.")
+                .setPositiveButton("해제") { _, _ ->
+                    try {
+                        getSystemService(android.app.admin.DevicePolicyManager::class.java).clearDeviceOwnerApp(packageName)
+                        toast("해제했습니다")
+                    } catch (e: Exception) {
+                        toast("해제 실패: ${e.message}")
+                    }
+                }
+                .setNegativeButton("취소", null)
+                .show()
+        }
+        c.label("지금 버전 ${BuildConfig.VERSION_NAME}", 13f, color = Color.GRAY)
         val st = c.label("", 15f, bold = true)
-        c.button("업데이트 확인·설치") { startUpdate { st.text = it } }
+        c.button("지금 업데이트 확인·설치") { startUpdate { st.text = it } }
+        refreshers += {
+            val m = ui.mode(this@MainActivity)
+            val ok = m == kr.sehotech.foodcourtcaller.common.UpdateInstaller.Mode.SILENT ||
+                m == kr.sehotech.foodcourtcaller.common.UpdateInstaller.Mode.DEVICE_OWNER
+            modeLine.text = (if (ok) "✔ " else "") + m.label
+            modeLine.setTextColor(Color.parseColor(if (ok) "#2E7D32" else if (m == kr.sehotech.foodcourtcaller.common.UpdateInstaller.Mode.NEEDS_SETUP) "#C62828" else "#8D6E00"))
+            setupBtn.visibility = if (m == kr.sehotech.foodcourtcaller.common.UpdateInstaller.Mode.NEEDS_SETUP) View.VISIBLE else View.GONE
+            releaseBtn.visibility = if (m == kr.sehotech.foodcourtcaller.common.UpdateInstaller.Mode.DEVICE_OWNER) View.VISIBLE else View.GONE
+            when_.text = if (ok) {
+                val w = BroadcastService.instance?.updateWindowText()
+                "새 버전은 영업이 끝난 뒤 저절로 설치됩니다" + if (w != null) ": $w" else "(방송 장치의 음악 끄는 시각 이후)"
+            } else if (m == kr.sehotech.foodcourtcaller.common.UpdateInstaller.Mode.NEEDS_SETUP) {
+                "설치할 때 한 번만: 아래 버튼을 누르고 설치 화면에서 [업데이트]를 누르면 다음부터 저절로 업데이트됩니다. ('이 출처 허용'이 먼저 뜨면 켜고 돌아오세요)"
+            } else {
+                "새 버전이 있으면 알림이 뜹니다. 알림을 누르고 [업데이트]를 누르세요."
+            }
+            lastLine.text = settings.autoResultText.ifBlank { "" }
+            lastLine.visibility = if (settings.autoResultText.isBlank()) View.GONE else View.VISIBLE
+        }
     }
 
     override fun onResume() {
@@ -500,7 +541,7 @@ class MainActivity : Activity() {
         val recent = adv.label("")
 
         val keys = advWrap.section("방송 키")
-        keys.label("이 키를 누르고 번호 + Enter를 치면 방송합니다.", 13f, color = Color.GRAY)
+        keys.label("이 키를 누르고 번호 + Enter를 치면 방송합니다. 원격 관리에서 '매장 태블릿 공통 설정'을 저장하면 그 값으로 바뀝니다.", 13f, color = Color.GRAY)
         val checks = KeyCodes.TRIGGER_CHOICES.map { (code, name) ->
             CheckBox(this).apply {
                 text = name

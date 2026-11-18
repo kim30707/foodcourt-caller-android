@@ -25,7 +25,8 @@ import java.util.concurrent.Executors
 
 /**
  * GitHub Releases에서 새 버전을 확인하고, 받아서 설치 화면을 띄운다.
- * 안드로이드 규칙상 설치는 기기에서 [설치]를 한 번 눌러야 끝난다(몰래 설치 불가).
+ * 자동 업데이트가 준비된 기기(UpdateInstaller)는 영업이 끝난 뒤 조용히 설치하고,
+ * 그렇지 않은 기기는 알림을 띄워 [설치]를 누르게 한다.
  */
 object UpdateChecker {
     private const val TAG = "UpdateChecker"
@@ -106,24 +107,13 @@ object UpdateChecker {
         }
         progress("내려받는 중…")
         executor.execute {
-            val file = File(activity.cacheDir, "updates/update.apk")
-            val ok = try {
-                file.parentFile?.mkdirs()
-                val conn = (URL(latest.apkUrl).openConnection() as HttpURLConnection).apply {
-                    connectTimeout = 10_000
-                    readTimeout = 30_000
-                    instanceFollowRedirects = true
-                    setRequestProperty("User-Agent", "foodcourt-caller-app")
-                }
-                try {
-                    conn.inputStream.use { input -> file.outputStream().use { input.copyTo(it) } }
-                } finally {
-                    conn.disconnect()
-                }
-                file.length() > 100_000
-            } catch (e: Exception) {
-                Log.w(TAG, "내려받기 실패", e)
-                false
+            val file = download(activity, latest.apkUrl)
+            val ok = file != null
+            // 자동 업데이트가 준비된 기기는 설치 화면 없이 바로 설치한다
+            if (ok && UpdateInstaller.silentReady(activity)) {
+                val started = UpdateInstaller.install(activity.applicationContext, file!!, interactive = true, version = latest.version)
+                main.post { progress(if (started) "설치 중… 잠시 뒤 앱이 다시 켜집니다" else UpdateInstaller.lastStatusText) }
+                return@execute
             }
             main.post {
                 if (!ok) {
@@ -131,7 +121,7 @@ object UpdateChecker {
                     return@post
                 }
                 progress("설치 화면에서 [업데이트]를 누르세요")
-                val uri = FileProvider.getUriForFile(activity, "${activity.packageName}.files", file)
+                val uri = FileProvider.getUriForFile(activity, "${activity.packageName}.files", file!!)
                 activity.startActivity(
                     Intent(Intent.ACTION_VIEW)
                         .setDataAndType(uri, "application/vnd.android.package-archive")
@@ -141,7 +131,28 @@ object UpdateChecker {
         }
     }
 
-    /** 서비스에서 6시간마다 부른다: 새 버전이 있으면 알림을 띄운다 */
+    /** 설치 파일 내려받기. 실패하면 null. 메인 스레드에서 부르지 않는다. */
+    private fun download(context: Context, url: String): File? = try {
+        val file = File(context.cacheDir, "updates/update.apk")
+        file.parentFile?.mkdirs()
+        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+            connectTimeout = 10_000
+            readTimeout = 30_000
+            instanceFollowRedirects = true
+            setRequestProperty("User-Agent", "foodcourt-caller-app")
+        }
+        try {
+            conn.inputStream.use { input -> file.outputStream().use { input.copyTo(it) } }
+        } finally {
+            conn.disconnect()
+        }
+        file.takeIf { it.length() > 100_000 }
+    } catch (e: Exception) {
+        Log.w(TAG, "내려받기 실패", e)
+        null
+    }
+
+    /** 서비스에서 6시간마다 부른다: 새 버전이 있으면 알림을 띄운다(자동 설치가 안 되는 기기) */
     fun periodicCheck(context: Context) {
         val settings = AppSettings(context)
         val now = System.currentTimeMillis()
@@ -149,6 +160,64 @@ object UpdateChecker {
         settings.lastUpdateCheck = now
         check { l, _ -> if (l != null) notifyUpdate(context.applicationContext, l.version) }
     }
+
+    private const val AUTO_CHECK_EVERY_MS = 60L * 60 * 1000
+    private const val RETRY_SAME_VERSION_MS = 20L * 60 * 60 * 1000
+
+    @Volatile
+    private var autoBusy = false
+
+    /**
+     * 1분마다 부른다. 자동 설치가 되는 기기면 업데이트 시간(영업 끝난 뒤)에만 새 버전을 받아 조용히 설치한다.
+     * 자동 설치가 안 되는 기기는 예전처럼 6시간마다 알림만 띄운다.
+     * allowedNow: 지금 업데이트 시간인지, force: [모든 태블릿 지금 업데이트]를 눌렀는지(시간 무시)
+     * idle: 지금 방송·입력 중이 아닌지
+     */
+    fun autoTick(context: Context, allowedNow: Boolean, force: Boolean = false, idle: Boolean = true) {
+        val app = context.applicationContext
+        if (!UpdateInstaller.silentReady(app)) {
+            periodicCheck(app)
+            return
+        }
+        if (!(allowedNow || force) || !idle || autoBusy) return
+        val settings = AppSettings(app)
+        val now = System.currentTimeMillis()
+        if (!force && now - settings.autoLastCheck < AUTO_CHECK_EVERY_MS) return
+        settings.autoLastCheck = now
+        autoBusy = true
+        executor.execute {
+            try {
+                val l = fetchLatest()
+                if (l != null) latestKnown = l.version
+                if (l == null || !Versions.isNewer(l.version, BuildConfig.VERSION_NAME)) return@execute
+                // 같은 버전이 계속 실패하면 하루에 한 번만 다시 시도하고, 두 번째부터는 알림도 띄운다
+                if (settings.autoTriedVersion == l.version) {
+                    if (!force && now - settings.autoTriedAt < RETRY_SAME_VERSION_MS) return@execute
+                    settings.autoTryCount = settings.autoTryCount + 1
+                } else {
+                    settings.autoTryCount = 1
+                }
+                settings.autoTriedVersion = l.version
+                settings.autoTriedAt = now
+                val file = download(app, l.apkUrl)
+                if (file == null) {
+                    settings.autoResultText = stamp() + " ${l.version} 내려받기 실패(다음에 다시)"
+                    return@execute
+                }
+                settings.autoResultText = stamp() + " ${l.version} 자동 설치 시작"
+                if (!UpdateInstaller.install(app, file, interactive = false, version = l.version)) {
+                    settings.autoResultText = stamp() + " ${l.version} 설치 실패 → 알림"
+                    main.post { notifyUpdate(app, l.version) }
+                } else if (settings.autoTryCount >= 2) {
+                    main.post { notifyUpdate(app, l.version) }
+                }
+            } finally {
+                autoBusy = false
+            }
+        }
+    }
+
+    private fun stamp(): String = java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.KOREA).format(java.util.Date())
 
     fun notifyUpdate(context: Context, version: String) {
         try {

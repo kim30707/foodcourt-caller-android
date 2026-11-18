@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>호출 방송 사용 설명서</title>
-<meta name="description" content="푸드코트 호출 방송 v0.3.1: 키패드 쓰는 법, 방송 태블릿·매장 태블릿 설치, 음악 자동, 업데이트, 안 될 때">
+<meta name="description" content="푸드코트 호출 방송 v0.4.0: 키패드 쓰는 법, 방송 태블릿·매장 태블릿 설치, 음악 자동, 업데이트, 안 될 때">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;700&display=swap">
@@ -223,7 +223,7 @@ section{padding-top:34px;scroll-margin-top:64px}
 
 <header class="hero">
   <div class="eyebrow">푸드코트 1·2층 · 매장 7곳</div>
-  <h1>호출 방송 사용 설명서 <span class="ver">v0.3.1</span></h1>
+  <h1>호출 방송 사용 설명서 <span class="ver">v0.4.0</span></h1>
   <p>키패드에서 <b>-</b> 를 먼저 누르고 번호와 Enter를 치면, 스피커로 "○○번 고객님" 방송이 나옵니다. 기존 호출 화면은 그대로 씁니다.</p>
   <div class="devs">
     <div class="card"><b class="t">방송 태블릿 · 1대</b><span class="why">앰프 옆. 방송과 매장 음악을 맡음. <b>"호출 방송(방송용)"</b> 앱</span><a href="#speaker">설치 방법 →</a></div>
@@ -518,6 +518,7 @@ section{padding-top:34px;scroll-margin-top:64px}
         <div class="path"><span class="chip">유튜브 뮤직에서 음악 틀기</span>→<span class="chip">호출 방송 앱</span>→<span class="chip go">테스트 방송</span></div>
         <div class="why">음악이 작아지고 "방송 테스트입니다"가 나온 뒤 음악이 돌아오면 성공.</div>
         <div class="why">방송이 작으면 앱 <b>소리</b> 칸의 <b>방송 음량·목소리 키우기</b>를 올리고, 둘 다 작으면 <b>앰프 MUSIC 노브</b>를 올립니다. 태블릿 음량 버튼은 음악과 방송을 함께 바꿉니다.</div>
+        <div class="note">끝나면 앱의 <b>[앱 업데이트 → 자동 업데이트 켜기]</b>도 한 번 눌러 두세요. <a href="#update">업데이트</a> 참고.</div>
         <div class="note">2층만 작게 들리면 앰프 <b>CH2(2층)</b> 볼륨을 올려 보세요.</div>
       </div>
       <div class="phone"><div class="scr">
@@ -626,6 +627,7 @@ section{padding-top:34px;scroll-margin-top:64px}
         <div class="hd"><span class="num">5</span><h3>꺼지지 않게 하기 · 테스트 방송</h3></div>
         <div class="path"><span class="chip go">배터리 제한 없음으로</span>→<span class="chip go">허용</span>→<span class="chip go">테스트 방송 보내기</span></div>
         <div class="why">스피커에서 테스트 방송이 나오면 맨 위가 초록 <b style="color:var(--ok)">설정 5 / 5 완료</b>가 됩니다.</div>
+        <div class="note">끝나면 화면을 내려 <b>[앱 업데이트 → 자동 업데이트 켜기]</b>도 한 번 눌러 두세요. <a href="#update">업데이트</a> 참고.</div>
         <div class="seq"><span class="key sm hot">−</span><span class="key sm">2</span><span class="key sm">4</span><span class="key sm">Enter</span><span class="arrow">→</span><b>스피커에서 방송</b></div>
         <div class="seq"><span class="key sm">2</span><span class="key sm">4</span><span class="key sm">Enter</span><span class="arrow">→</span><b>호출 화면에 평소대로</b></div>
         <div class="why">둘 다 되면 끝. 마지막으로 <b>호출 앱 화면</b>으로 돌려놓습니다. 키가 안 먹으면 설정 화면의 <b>키패드 눌러 보기</b>로 키가 들어오는지 확인하세요.</div>
@@ -681,21 +683,22 @@ section{padding-top:34px;scroll-margin-top:64px}
   <div class="sec-head">
     <span class="who">누구나</span>
     <h2>앱 업데이트</h2>
-    <p>고친 버전이 나오면 각 태블릿이 <b>6시간마다 스스로 확인</b>해서 "새 버전" 알림을 띄웁니다.</p>
+    <p>고친 버전이 나오면 태블릿이 <b>영업이 끝난 뒤(음악 끄는 시각 이후)</b> 스스로 받아 설치합니다. 직원은 <b>아무것도 누르지 않아도</b> 됩니다.</p>
   </div>
   <div class="step">
     <div class="txt">
-      <div class="path"><span class="chip">알림 누르기 또는 앱의 업데이트 확인·설치</span>→<span class="chip">내려받기</span>→<span class="chip go">업데이트</span></div>
-      <div class="why">안드로이드 규칙상 마지막 <b>[업데이트]</b> 버튼은 태블릿에서 한 번 눌러야 합니다. 처음 한 번은 <b>이 출처 허용</b> 화면이 먼저 뜹니다. 켜고 뒤로 와서 다시 누르세요.</div>
-      <div class="note">v0.3.0보다 옛 버전은 앱 안 업데이트가 없습니다. 위 설치 링크로 한 번 손으로 설치하세요. 설정은 그대로 남습니다.</div>
+      <div class="path"><span class="chip">설치할 때 한 번만</span>→<span class="chip">앱 업데이트 → 자동 업데이트 켜기</span>→<span class="chip go">업데이트</span></div>
+      <div class="why">설치 담당이 태블릿마다 한 번 해 둡니다. 설치 화면이 뜨면 <b>[업데이트]</b>를 누르세요. <b>이 출처 허용</b> 화면이 먼저 뜨면 켜고 뒤로 와서 다시 누르세요. 초록색 <b style="color:var(--ok)">✔ 자동 업데이트 준비됨</b>이 나오면 끝입니다.</div>
+      <div class="note">안드로이드 11 이하 태블릿은 자동 설치가 안 됩니다. 이때는 "새 버전" 알림이 뜨면 눌러서 <b>[업데이트]</b>를 누르세요. 자동 설치가 실패한 경우에도 같은 알림이 뜹니다. 설정은 그대로 남습니다.</div>
     </div>
     <div class="phone"><div class="scr">
       <div class="sb"><span>9:41</span><span>▮▮</span></div>
       <div class="body">
-        <div class="card2"><b>호출 방송 새 버전 0.3.2</b><span class="lbl">눌러서 업데이트하세요</span></div>
         <b>앱 업데이트</b>
-        <span class="lbl">지금 버전 0.3.1. 새 버전이 있으면 받아서 설치 화면을 띄웁니다.</span>
-        <div class="sbtn hl">업데이트 확인·설치</div>
+        <b style="color:#2E7D32">✔ 자동 업데이트 준비됨</b>
+        <span class="lbl">새 버전은 영업이 끝난 뒤 저절로 설치됩니다</span>
+        <span class="lbl">지금 버전 0.4.0</span>
+        <div class="sbtn">지금 업데이트 확인·설치</div>
       </div>
     </div></div>
   </div>
@@ -849,7 +852,7 @@ section{padding-top:34px;scroll-margin-top:64px}
 </section>
 
 <footer class="foot">
-  <span>이 설명서: https://kim30707.github.io/foodcourt-caller-android/ · 앱 v0.3.1 기준</span>
+  <span>이 설명서: https://kim30707.github.io/foodcourt-caller-android/ · 앱 v0.4.0 기준</span>
   <span>방송 태블릿용: <span data-apk-inline="spk"></span></span>
   <span>매장 태블릿용: <span data-apk-inline="store"></span></span>
   <span>메뉴 이름은 삼성 갤럭시 기준이며 기기마다 조금 다를 수 있습니다. 메뉴가 안 보이면 설정 위쪽 돋보기에 이름을 넣어 찾으세요.</span>

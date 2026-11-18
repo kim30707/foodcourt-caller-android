@@ -31,15 +31,23 @@ input[type=range]{width:100%}
 </div>
 
 <div id="main" style="display:none">
-<div class="card"><h2>방송 장치</h2><div id="dev"></div>
+<div class="card"><h2>방송 장치</h2><div id="dev"></div><div id="upd" class="mut" style="margin-top:6px"></div>
 <button onclick="act('restart')">서버 다시 시작</button>
-<button onclick="act('check_update')" class="gray">업데이트 확인</button>
+<button onclick="updateAll()">모든 태블릿 지금 업데이트</button>
 <button onclick="logout()" class="gray">이 휴대폰에서 로그아웃</button>
 <p class="mut">PIN은 이 휴대폰에 저장되어 다음부터 바로 열립니다. 홈 화면에 추가해 두면 앱처럼 쓸 수 있습니다.</p></div>
 
 <div class="card"><h2>매장 태블릿</h2>
 <p class="mut">태블릿이 1분마다 신호를 보냅니다. 3분 넘게 신호가 없으면 빨간색입니다.</p>
 <table id="tabs"></table></div>
+
+<div class="card"><h2>매장 태블릿 공통 설정</h2>
+<p class="mut">저장하면 모든 매장 태블릿에 1~2분 안에 똑같이 적용됩니다.</p>
+<label>방송 키(이 키 + 번호 + Enter)</label><div id="keys"></div>
+<label>자동 취소 시간(초, 2~60)</label><input id="tTimeout" type="number" min="2" max="60" style="width:90px">
+<label><input type="checkbox" id="tNav"> 이동 키를 숫자로 해석(Num Lock이 꺼진 키패드)</label>
+<button onclick="saveTerminal()">모든 태블릿에 적용</button>
+<div id="tState" class="mut"></div></div>
 
 <div class="card"><h2>테스트 방송</h2>
 <select id="store"></select> <button onclick="act('test',{store:val('store')})">테스트 방송</button></div>
@@ -88,11 +96,16 @@ function load(first){
     el('login').style.display='none';el('main').style.display='block';
     el('dev').innerHTML='<div><b>'+esc(j.address)+'</b></div><div>버전 '+esc(j.version)+(j.latest&&j.latest!==j.version?' <span class="bad">(최신 '+esc(j.latest)+')</span>':'')+
       ' · 음성 <span class="'+(j.tts==='ready'?'ok':'bad')+'">'+esc(j.ttsLabel)+'</span> · 대기열 '+j.queue+'건 · 켜진 지 '+ago(j.uptimeSec)+'</div>';
+    var u=j.update||{};
+    el('upd').innerHTML='자동 업데이트 시간: '+esc(u.window)+(u.allowedNow?' <span class="ok">(지금 업데이트 시간)</span>':'')+'<br>이 방송 장치: '+esc(u.self)+(u.last?'<br>최근: '+esc(u.last):'');
+    var AU={device_owner:'<span class="ok">자동(전용 기기)</span>',ready:'<span class="ok">자동</span>',setup:'<span class="bad">자동 업데이트 켜기 필요</span>',notify:'<span class="mut">알림만</span>'};
     var t='<tr><th>매장</th><th>상태</th><th>버전</th><th>마지막 전송</th></tr>';
     j.devices.forEach(function(d){
       var st=d.online?'<span class="ok">연결 '+ago(d.agoSec)+'</span>':'<span class="bad">신호 없음 '+ago(d.agoSec)+'</span>';
       if(!d.accessibility)st+='<br><span class="bad">키패드 기능 꺼짐</span>';
       if(!d.battery)st+='<br><span class="bad">배터리 제한 켜짐</span>';
+      st+='<br>업데이트: '+(AU[d.autoUpdate]||'<span class="mut">구버전 앱</span>');
+      if(!d.configApplied&&d.online)st+='<br><span class="mut">공통 설정 적용 대기</span>';
       t+='<tr><td>'+esc(d.store)+'<br><span class="mut">'+esc(d.device)+' '+esc(d.ip)+'</span></td><td>'+st+'</td><td'+(d.outdated?' class="bad"':'')+'>'+esc(d.version)+'</td><td>'+esc(d.lastSend)+'</td></tr>';
     });
     if(!j.devices.length)t+='<tr><td colspan=4 class="mut">아직 신호를 보낸 태블릿이 없습니다(태블릿 앱 v0.3.0 이상 필요).</td></tr>';
@@ -101,6 +114,10 @@ function load(first){
       var s=el('store');s.innerHTML='';j.stores.forEach(function(n){var o=document.createElement('option');o.textContent=n;s.appendChild(o);});
       ['volume','voiceBoost','speechRate','repeat'].forEach(function(k){el(k).value=j.sound[k];sv(el(k));});
       el('chime').checked=j.sound.chime;
+      var cfg=j.terminal||{triggerKeys:[],cancelTimeoutSec:8,navAsDigits:false};
+      el('keys').innerHTML=(j.keyChoices||[]).map(function(k){return '<label style="display:inline-block;margin-right:12px"><input type="checkbox" class="tk" value="'+k.code+'"'+(cfg.triggerKeys.indexOf(k.code)>=0?' checked':'')+'> '+esc(k.name)+'</label>';}).join('');
+      el('tTimeout').value=cfg.cancelTimeoutSec;el('tNav').checked=cfg.navAsDigits;
+      el('tState').textContent=j.terminal?'':'아직 공통 설정을 저장한 적 없음(각 태블릿에서 정한 값 사용 중)';
       el('musicAuto').checked=j.music.auto;el('musicOn').value=j.music.on;el('musicOff').value=j.music.off;
       filled=true;
     }
@@ -118,6 +135,12 @@ function load(first){
 function act(a,extra){var b=extra||{};b.action=a;api('/admin/api/action',b).then(function(j){msg(j.message||'완료');setTimeout(load,1500);}).catch(function(e){msg(errText(e));});}
 function saveSound(){api('/admin/api/settings',{volume:+val('volume'),voiceBoost:+val('voiceBoost'),speechRate:+val('speechRate'),repeat:+val('repeat'),chime:el('chime').checked}).then(function(){msg('소리 설정 저장');}).catch(function(e){msg(errText(e));});}
 function saveMusic(){api('/admin/api/settings',{musicAuto:el('musicAuto').checked,musicOn:val('musicOn'),musicOff:val('musicOff')}).then(function(j){msg(j.message||'저장');}).catch(function(e){msg(errText(e));});}
+function saveTerminal(){
+  var keys=[].slice.call(document.querySelectorAll('.tk')).filter(function(c){return c.checked;}).map(function(c){return +c.value;});
+  if(!keys.length){msg('방송 키를 하나 이상 고르세요');return;}
+  api('/admin/api/settings',{terminal:{triggerKeys:keys,cancelTimeoutSec:+val('tTimeout'),navAsDigits:el('tNav').checked}}).then(function(j){msg(j.message||'저장');el('tState').textContent='';}).catch(function(e){msg(errText(e));});
+}
+function updateAll(){if(confirm('새 버전이 있으면 지금(영업 중이어도) 모든 태블릿과 방송 장치를 업데이트합니다. 방송이 1~2분 멈출 수 있습니다. 진행할까요?'))act('update_all');}
 if(PIN)load(true);
 setInterval(function(){if(el('main').style.display!=='none')load(false);},10000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden&&PIN)load(false);});

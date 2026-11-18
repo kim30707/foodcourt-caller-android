@@ -28,6 +28,10 @@ import kr.sehotech.foodcourtcaller.common.DefaultStores
 import kr.sehotech.foodcourtcaller.common.NetUtil
 import kr.sehotech.foodcourtcaller.common.NumberRules
 import kr.sehotech.foodcourtcaller.common.Protocol
+import kr.sehotech.foodcourtcaller.common.TerminalConfig
+import kr.sehotech.foodcourtcaller.common.UpdateChecker
+import kr.sehotech.foodcourtcaller.common.UpdateInstaller
+import kr.sehotech.foodcourtcaller.common.UpdateWindow
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -378,7 +382,7 @@ class BroadcastService : Service() {
             announcer.init()
         }
         if (worker?.isAlive != true) startWorker()
-        kr.sehotech.foodcourtcaller.common.UpdateChecker.periodicCheck(this)
+        autoUpdateTick()
         val now = System.currentTimeMillis()
         if (now - lastPrune > 60 * 60 * 1000L) {
             callLog.prune(now)
@@ -519,7 +523,7 @@ class BroadcastService : Service() {
     fun adminState(): String {
         val fmt = java.text.SimpleDateFormat("MM-dd HH:mm:ss", java.util.Locale.KOREA)
         val all = callLog.recent(200)
-        val latest = kr.sehotech.foodcourtcaller.common.UpdateChecker.latestKnown
+        val latest = UpdateChecker.latestKnown
         return JSONObject().apply {
             put("ok", true)
             put("address", addressText())
@@ -529,7 +533,7 @@ class BroadcastService : Service() {
             put("queue", queue.size)
             put("tts", announcer.state.code)
             put("ttsLabel", announcer.state.label)
-            put("devices", devices.toJson(latest))
+            put("devices", devices.toJson(latest, settings.terminalConfigVersion))
             put("stores", JSONArray().apply { settings.stores.filter { it.enabled }.forEach { put(it.name) } })
             put("sound", JSONObject().apply {
                 put("volume", settings.volume)
@@ -537,6 +541,18 @@ class BroadcastService : Service() {
                 put("speechRate", settings.speechRatePercent)
                 put("repeat", settings.repeatCount)
                 put("chime", settings.chimeEnabled)
+            })
+            put("update", JSONObject().apply {
+                put("window", updateWindowText())
+                put("allowedNow", updateAllowedNow())
+                put("self", UpdateInstaller.mode(this@BroadcastService).label)
+                put("selfCode", UpdateInstaller.mode(this@BroadcastService).code)
+                put("last", settings.autoResultText)
+            })
+            put("terminal", (TerminalConfig.fromText(settings.terminalConfigJson)?.toJson() ?: JSONObject.NULL))
+            put("terminalVersion", settings.terminalConfigVersion)
+            put("keyChoices", JSONArray().apply {
+                kr.sehotech.foodcourtcaller.terminal.KeyCodes.TRIGGER_CHOICES.forEach { (code, name) -> put(JSONObject().put("code", code).put("name", name)) }
             })
             put("music", JSONObject().apply {
                 put("auto", settings.musicAutoEnabled)
@@ -584,6 +600,13 @@ class BroadcastService : Service() {
         } else if (o.has("musicAuto")) {
             settings.musicAutoEnabled = o.optBoolean("musicAuto")
         }
+        if (o.has("terminal")) {
+            val cfg = TerminalConfig.fromJson(o.optJSONObject("terminal"))
+                ?: return HttpResultJson(400, JSONObject().put("ok", false).put("error", "방송 키를 하나 이상, 취소 시간은 2~60초로 넣어 주세요").toString())
+            settings.terminalConfigJson = cfg.toJson().toString()
+            settings.terminalConfigVersion = System.currentTimeMillis()
+            message = "저장했습니다. 매장 태블릿에 1~2분 안에 적용됩니다"
+        }
         logEvent("admin", "원격 설정 변경")
         return HttpResultJson(200, JSONObject().put("ok", true).put("message", message).toString())
     }
@@ -610,9 +633,37 @@ class BroadcastService : Service() {
                 }
                 "확인 중입니다. 새 버전이 있으면 방송 장치에 알림이 뜹니다"
             }
+            "update_all" -> {
+                settings.updateNonce = System.currentTimeMillis()
+                logEvent("update", "모든 태블릿 지금 업데이트 요청")
+                "모든 태블릿에 업데이트를 요청했습니다. 1~3분 안에 새 버전이 있으면 설치되고, 방송 장치도 잠시 뒤 다시 켜집니다"
+            }
             else -> return HttpResultJson(400, JSONObject().put("ok", false).put("error", "unknown_action").toString())
         }
         return HttpResultJson(200, JSONObject().put("ok", true).put("message", message).toString())
+    }
+
+    /** 지금이 업데이트 시간(영업 끝난 뒤)인지 */
+    fun updateAllowedNow(): Boolean =
+        UpdateWindow.serverAllows(nowMinute(), settings.musicAutoEnabled, settings.musicOnMin, settings.musicOffMin)
+
+    fun updateWindowText(): String =
+        if (settings.musicAutoEnabled && settings.musicOnMin != settings.musicOffMin) {
+            "${MusicSchedule.format(settings.musicOffMin)} ~ ${MusicSchedule.format(settings.musicOnMin)} (음악 끈 뒤~켜기 전)"
+        } else {
+            "02:00 ~ 06:00 (음악 자동을 켜면 그 시간에 맞춤)"
+        }
+
+    /** [모든 태블릿 지금 업데이트]를 이 방송 장치가 처리했는지(메모리) */
+    private var handledNonce = 0L
+
+    /** 30초마다: 방송 중이 아니고 업데이트 시간이면 이 방송 장치도 스스로 업데이트 */
+    private fun autoUpdateTick() {
+        val force = settings.updateNonce != 0L && settings.updateNonce != handledNonce
+        if (force) handledNonce = settings.updateNonce
+        val lastCall = callLog.recent(10).firstOrNull { it.source != "system" }?.time ?: 0L
+        val idle = queue.size == 0 && System.currentTimeMillis() - lastCall > 5 * 60 * 1000L
+        UpdateChecker.autoTick(this, updateAllowedNow(), force = force, idle = idle || force)
     }
 
     fun handleHeartbeat(body: String, token: String?, ip: String): HttpResultJson {
@@ -621,8 +672,16 @@ class BroadcastService : Service() {
             return HttpResultJson(401, CallResponse(ok = false, error = Protocol.ERR_BAD_TOKEN).toJson())
         }
         val ok = devices.update(body, ip)
-        val latest = kr.sehotech.foodcourtcaller.common.UpdateChecker.latestKnown
-        return HttpResultJson(if (ok) 200 else 400, JSONObject().put("ok", ok).put("latest", latest ?: JSONObject.NULL).toString())
+        val latest = UpdateChecker.latestKnown
+        val out = JSONObject()
+            .put("ok", ok)
+            .put("latest", latest ?: JSONObject.NULL)
+            .put("updateAllowed", updateAllowedNow())
+            .put("updateNonce", settings.updateNonce)
+        TerminalConfig.fromText(settings.terminalConfigJson)?.let {
+            out.put("config", it.toJson().put("version", settings.terminalConfigVersion))
+        }
+        return HttpResultJson(if (ok) 200 else 400, out.toString())
     }
 
     fun statusPage(): String = WebPages.statusPage(
