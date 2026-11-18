@@ -3,19 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="푸드코트 호출 방송: 키패드 쓰는 법, 매장 태블릿·음악 폰 설치, 안 될 때">
-<style>
-:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-body{margin:0;font:14px/1.5 system-ui,-apple-system,sans-serif}
-img{max-width:100%}
-[hidden]{display:none!important}
-<title>호출 방송 설치 안내서</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<title>호출 방송 사용 설명서</title>
+<meta name="description" content="푸드코트 호출 방송 v0.3.1: 키패드 쓰는 법, 방송 태블릿·매장 태블릿 설치, 음악 자동, 원격 관리, 업데이트, 안 될 때">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;700&display=swap">
 <style>
-/* 레이아웃: 휴대폰 한 손 보기 기준 한 줄 흐름. 단계 = [번호·설명] + [기기 화면 그림], 넓은 화면에서만 옆으로 */
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
 :root{
   --bg:#EEF2F5; --surface:#FFFFFF; --ink:#13202B; --muted:#56656F; --line:#D5DDE3;
   --brand:#1F4E79; --brand-soft:#E3ECF5; --signal:#F2A900; --signal-soft:#FFF3D1;
@@ -212,6 +209,12 @@ section{padding-top:34px;scroll-margin-top:64px}
 .off{border:2px dashed var(--err);border-radius:16px;padding:14px;display:grid;gap:8px;background:var(--surface)}
 
 .foot{margin-top:40px;color:var(--muted);font-size:.85rem;display:grid;gap:4px}
+
+.ver{display:inline-block;font-size:.8rem;font-weight:700;color:var(--ok);border:1px solid var(--ok);border-radius:999px;padding:1px 10px;margin-left:6px;vertical-align:middle}
+.devs{display:grid;gap:10px;grid-template-columns:1fr}
+@media (min-width:640px){.devs{grid-template-columns:1fr 1fr}}
+.devs .card{display:grid;gap:6px}
+.devs b.t{font-family:var(--f-display);font-weight:400;font-size:1.25rem}
 </style>
 </head>
 <body>
@@ -220,15 +223,22 @@ section{padding-top:34px;scroll-margin-top:64px}
 
 <header class="hero">
   <div class="eyebrow">푸드코트 1·2층 · 매장 7곳</div>
-  <h1>호출 방송 설치 안내서</h1>
+  <h1>호출 방송 사용 설명서 <span class="ver">v0.3.1</span></h1>
   <p>키패드에서 <b>-</b> 를 먼저 누르고 번호와 Enter를 치면, 스피커로 "○○번 고객님" 방송이 나옵니다. 기존 호출 화면은 그대로 씁니다.</p>
+  <div class="devs">
+    <div class="card"><b class="t">방송 태블릿 · 1대</b><span class="why">앰프 옆. 방송과 매장 음악을 맡음. <b>"호출 방송(방송용)"</b> 앱</span><a href="#speaker">설치 방법 →</a></div>
+    <div class="card"><b class="t">매장 태블릿 · 매장마다</b><span class="why">키패드가 꽂힌 태블릿. <b>"호출 방송"</b> 앱</span><a href="#tablet">설치 방법 →</a></div>
+  </div>
 </header>
 
-<nav class="tabs" aria-label="안내서 목차">
+<nav class="tabs" aria-label="설명서 목차">
   <div class="row">
     <a href="#use">키패드 쓰는 법</a>
-    <a href="#tablet">매장 태블릿 설치</a>
-    <a href="#phone">음악 폰 설치</a>
+    <a href="#speaker">방송 태블릿</a>
+    <a href="#tablet">매장 태블릿</a>
+    <a href="#music">음악 자동</a>
+    <a href="#remote">원격 관리</a>
+    <a href="#update">업데이트</a>
     <a href="#backup">휴대폰으로 방송</a>
     <a href="#trouble">안 될 때</a>
     <a href="#overview">전체 구성</a>
@@ -303,128 +313,12 @@ section{padding-top:34px;scroll-margin-top:64px}
   </div>
 </section>
 
-<!-- ───────── 매장 태블릿 ───────── -->
-<section id="tablet">
-  <div class="sec-head">
-    <span class="who">설치 담당 · 매장마다 한 번</span>
-    <h2>매장 태블릿 설치</h2>
-    <p>손님 없는 시간에 하세요. 매장당 5~10분. 방송 폰을 먼저 설치해 두어야 연결 확인이 됩니다.</p>
-  </div>
-
-  <div class="steps">
-    <div class="step">
-      <div class="txt">
-        <div class="hd"><span class="num">1</span><h3>앱 받아 설치</h3></div>
-        <div class="get">
-          <div class="qr" id="qr1" aria-label="설치 파일 QR 코드"></div>
-          <div style="display:grid;gap:8px;min-width:0">
-            <div class="why">태블릿 카메라로 QR을 찍거나, 카톡으로 받은 링크를 <b>Chrome</b>에서 엽니다.</div>
-            <div class="url apk-url"></div>
-            <div class="acts"><button class="btn copy-apk">주소 복사</button></div>
-          </div>
-        </div>
-        <div class="path"><span class="chip">다운로드</span>→<span class="chip">열기</span>→<span class="chip">설정</span>→<span class="chip go">이 출처 허용</span>→<span class="chip">뒤로</span>→<span class="chip go">설치</span></div>
-        <div class="note">카톡 안에서 열면 받기가 안 될 수 있습니다. 카톡 화면 오른쪽 아래 <b>⋮</b> → <b>다른 브라우저로 열기</b>.<br>"Play 프로텍트" 경고가 나오면 <b>자세히</b> → 설치 계속 버튼.</div>
-      </div>
-      <div class="mini-row" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-        <div class="mini"><div class="phone"><div class="scr"><div class="sb"><span>9:41</span><span>▮▮</span></div><div class="body" style="align-content:end;padding-bottom:16px"><div class="card2"><b>foodcourt-caller.apk</b><span class="lbl">다운로드 완료</span><div class="sbtn hl">열기</div></div></div></div></div><span><span class="n">a</span> 열기</span></div>
-        <div class="mini"><div class="phone"><div class="scr"><div class="sb"><span>9:41</span><span>▮▮</span></div><div class="ab plain">출처를 알 수 없는 앱</div><div class="body"><div class="li"><span>이 출처 허용</span><span class="tg on hl"></span></div><span class="lbl">Chrome</span></div></div></div><span><span class="n">b</span> 허용 켜기</span></div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="txt">
-        <div class="hd"><span class="num">2</span><h3>매장용으로 연결</h3></div>
-        <div class="path"><span class="chip">앱 실행</span>→<span class="chip go">매장용</span>→<span class="chip">매장 고르기</span>→<span class="chip go">자동 찾기</span>→<span class="chip go">연결 테스트</span></div>
-        <div class="why"><b style="color:var(--ok)">연결됨</b>이 나오면 성공. 자동 찾기가 안 되면 방송 폰에 적힌 주소(예: 192.168.0.23:8080)를 직접 넣고 <b>저장</b>.</div>
-      </div>
-      <div class="phone"><div class="scr">
-        <div class="sb"><span>9:41</span><span>▮▮</span></div>
-        <div class="ab">호출 방송 · 매장용</div>
-        <div class="body">
-          <span class="lbl">매장</span>
-          <div class="li"><b>하즈벤</b><small>▼</small></div>
-          <span class="lbl">방송 장치 주소</span>
-          <div class="li"><span>192.168.0.23:8080</span></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:11px">
-            <div class="sbtn">저장</div><div class="sbtn hl">자동 찾기</div><div class="sbtn">연결 테스트</div>
-          </div>
-          <div class="green">연결됨 · 대기 0건 · 음성 준비됨</div>
-        </div>
-      </div></div>
-    </div>
-
-    <div class="step">
-      <div class="txt">
-        <div class="hd"><span class="num">3</span><h3>접근성 켜기</h3></div>
-        <div class="path"><span class="chip">접근성 설정 열기</span>→<span class="chip">설치된 앱</span>→<span class="chip">호출 방송</span>→<span class="chip go">켜기</span>→<span class="chip go">허용</span></div>
-        <div class="why">키패드 입력을 받으려면 꼭 켜야 합니다. 화면 내용은 읽지 않습니다.</div>
-        <div class="note">"제한된 설정" 안내가 뜨면 <b>확인</b>을 누르고 4번으로.</div>
-      </div>
-      <div class="phone"><div class="scr">
-        <div class="sb"><span>9:41</span><span>▮▮</span></div>
-        <div class="ab plain">호출 방송</div>
-        <div class="body">
-          <div class="li"><span>사용 안 함 → <b>사용 중</b></span><span class="tg on hl"></span></div>
-          <span class="lbl">숫자 키패드의 '-' 번호 Enter를 받아 방송 장치로 보냅니다.</span>
-        </div>
-        <div class="dim"></div>
-        <div class="dialog"><b>호출 방송에 기기 전체 제어 권한을 허용할까요?</b><span class="lbl">키 입력 관찰…</span><div class="dlg-btns"><span>거부</span><span class="hl" style="padding:0 6px">허용</span></div></div>
-      </div></div>
-    </div>
-
-    <div class="step">
-      <div class="txt">
-        <div class="hd"><span class="num">4</span><h3>제한된 설정 풀기</h3></div>
-        <div class="why">안드로이드 13 이상에서 3번이 막힐 때만. 12 이하는 건너뜁니다.</div>
-        <div class="path"><span class="chip">설정</span>→<span class="chip">애플리케이션</span>→<span class="chip">호출 방송</span>→<span class="chip">오른쪽 위 ⋮</span>→<span class="chip go">제한된 설정 허용</span>→<span class="chip">잠금 해제</span>→<span class="chip">다시 3번</span></div>
-      </div>
-      <div class="phone"><div class="scr">
-        <div class="sb"><span>9:41</span><span>▮▮</span></div>
-        <div class="ab plain" style="display:flex;justify-content:space-between">애플리케이션 정보<span class="hl" style="padding:0 6px">⋮</span></div>
-        <div class="body">
-          <div style="display:grid;justify-items:center;gap:4px;padding:6px"><div style="width:44px;height:44px;border-radius:12px;background:#1F4E79"></div><b>호출 방송</b></div>
-          <div class="li"><span>알림</span></div><div class="li"><span>권한</span></div>
-        </div>
-        <div class="card2" style="position:absolute;top:58px;right:12px;background:#fff;box-shadow:0 4px 16px rgba(0,0,0,.2)"><span class="hl" style="padding:4px 6px">제한된 설정 허용</span></div>
-      </div></div>
-    </div>
-
-    <div class="step">
-      <div class="txt">
-        <div class="hd"><span class="num">5</span><h3>배터리 제한 풀기</h3></div>
-        <div class="path"><span class="chip">앱의 배터리 제한 없음으로</span>→<span class="chip go">허용</span></div>
-        <div class="why">밤새 켜 두어도 앱이 꺼지지 않게 합니다. 글자가 초록 <b style="color:var(--ok)">배터리 제한 없음 ✔</b>이면 끝.</div>
-      </div>
-      <div class="phone"><div class="scr">
-        <div class="sb"><span>9:41</span><span>▮▮</span></div>
-        <div class="ab">호출 방송 · 매장용</div>
-        <div class="body"><span class="lbl">배터리</span><span class="red">배터리 최적화 켜짐</span><div class="sbtn hl">배터리 제한 없음으로</div></div>
-        <div class="dim"></div>
-        <div class="dialog"><b>앱을 백그라운드에서 항상 실행할까요?</b><div class="dlg-btns"><span>거부</span><span class="hl" style="padding:0 6px">허용</span></div></div>
-      </div></div>
-    </div>
-
-    <div class="step">
-      <div class="txt">
-        <div class="hd"><span class="num">6</span><h3>눌러서 확인하고 돌려놓기</h3></div>
-        <div class="seq"><span class="key sm hot">−</span><span class="key sm">2</span><span class="key sm">4</span><span class="key sm">Enter</span><span class="arrow">→</span><b>스피커에서 방송</b></div>
-        <div class="seq"><span class="key sm">2</span><span class="key sm">4</span><span class="key sm">Enter</span><span class="arrow">→</span><b>호출 화면에 평소대로</b></div>
-        <div class="why">둘 다 되면 끝. 마지막으로 <b>호출 앱 화면</b>으로 돌려놓습니다.</div>
-      </div>
-      <div class="tablet" style="max-width:250px;margin-inline:auto;width:100%">
-        <div class="glass" style="min-height:130px"><div class="banner b-ok" style="font-size:.85rem">24번 방송 요청 완료</div><span>호출 앱 화면</span></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ───────── 방송 폰 ───────── -->
-<section id="phone">
+<!-- ───────── 방송 태블릿 ───────── -->
+<section id="speaker">
   <div class="sec-head">
     <span class="who">설치 담당 · 2층 장비실 한 번</span>
-    <h2>방송 폰 설치 = 지금 음악 트는 폰</h2>
-    <p>지금 앰프에 블루투스로 음악을 트는 <b>그 폰</b>에 앱을 깔아 같이 씁니다. 음악은 그대로 나오고, 방송하는 몇 초 동안만 음악 소리가 작아졌다가 돌아옵니다.</p>
+    <h2>방송 태블릿 설치</h2>
+    <p>앰프 옆에 두는 태블릿 1대입니다. 호출 방송과 매장 음악을 함께 맡습니다. <b>매장 태블릿보다 먼저</b> 설치하세요.</p>
   </div>
 
   <div class="card tl" style="margin-bottom:14px" aria-label="음악과 방송이 나오는 순서">
@@ -436,28 +330,26 @@ section{padding-top:34px;scroll-margin-top:64px}
     <div class="cap"><span>평소</span><span>방송 약 5초</span><span>저절로 원래 크기</span></div>
   </div>
 
-  <h3 style="margin:0 0 10px">이 폰은 앞으로 꼭</h3>
+  <h3 style="margin:0 0 10px">이 태블릿은 앞으로 꼭</h3>
   <div class="must" style="margin-bottom:16px">
-    <div><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>2층 장비실에 그대로<small>가져가면 방송이 멈춤</small></div>
-    <div><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.67 4H14V2h-4v2H8.33A1.33 1.33 0 0 0 7 5.33v15.33A1.33 1.33 0 0 0 8.33 22h7.33A1.33 1.33 0 0 0 17 20.67V5.33A1.33 1.33 0 0 0 15.67 4zM11 20v-5.5H9L13 7v5.5h2L11 20z"/></svg>충전기에 꽂아 두기<small>밤에도 계속</small></div>
-    <div><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21l3.6-4.8A6 6 0 0 0 8.4 16.2L12 21zM12 3C7.95 3 4.21 4.34 1.2 6.6L3 9c2.5-1.88 5.62-3 9-3s6.5 1.12 9 3l1.8-2.4C19.79 4.34 16.05 3 12 3zm0 6c-2.7 0-5.19.89-7.2 2.4l1.8 2.4C8.1 12.67 9.97 12 12 12s3.9.67 5.4 1.8l1.8-2.4C17.19 9.89 14.7 9 12 9z"/></svg>와이파이 켜 두기<small>모바일 데이터만으론 안 됨</small></div>
+    <div><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>앰프 옆에 그대로<small>옮기면 방송이 멈춤</small></div>
+    <div><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.67 4H14V2h-4v2H8.33A1.33 1.33 0 0 0 7 5.33v15.33A1.33 1.33 0 0 0 8.33 22h7.33A1.33 1.33 0 0 0 17 20.67V5.33A1.33 1.33 0 0 0 15.67 4zM11 20v-5.5H9L13 7v5.5h2L11 20z"/></svg>충전기에 꽂아 두기<small>24시간 켜 둠</small></div>
+    <div><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21l3.6-4.8A6 6 0 0 0 8.4 16.2L12 21zM12 3C7.95 3 4.21 4.34 1.2 6.6L3 9c2.5-1.88 5.62-3 9-3s6.5 1.12 9 3l1.8-2.4C19.79 4.34 16.05 3 12 3zm0 6c-2.7 0-5.19.89-7.2 2.4l1.8 2.4C8.1 12.67 9.97 12 12 12s3.9.67 5.4 1.8l1.8-2.4C17.19 9.89 14.7 9 12 9z"/></svg>와이파이 켜 두기<small>매장 태블릿과 같은 와이파이</small></div>
     <div><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-9h-1V6a5 5 0 0 0-9.9-1l1.95.45A3 3 0 0 1 15 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm0 12H6V10h12v10z"/></svg>화면 잠금 없음<small>정전 뒤 저절로 시작</small></div>
   </div>
-  <div class="note" style="margin-bottom:16px">직원 개인 폰이면 퇴근할 때 가져가지 않도록 해 주세요. 가능하면 이 폰을 매장 공용 폰으로 정해 두는 것이 좋습니다.</div>
 
   <div class="steps">
     <div class="step">
       <div class="txt">
         <div class="hd"><span class="num">1</span><h3>화면 잠금 없애기</h3></div>
-        <div class="path"><span class="chip">설정</span>→<span class="chip">돋보기</span>→<span class="chip">"화면 잠금 방식"</span>→<span class="chip">비밀번호 입력</span>→<span class="chip go">없음</span></div>
-        <div class="why">잠금이 없어야 정전 뒤 폰이 다시 켜질 때 방송이 저절로 시작됩니다.</div>
+        <div class="path"><span class="chip">설정</span>→<span class="chip">돋보기</span>→<span class="chip">"화면 잠금"</span>→<span class="chip go">없음</span></div>
+        <div class="why">잠금이 없어야 정전 뒤 태블릿이 다시 켜질 때 방송이 저절로 시작됩니다.</div>
       </div>
       <div class="phone"><div class="scr">
         <div class="sb"><span>9:41</span><span>▮▮</span></div>
         <div class="body">
-          <div class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>화면 잠금 방식</div>
           <b style="font-size:15px">화면 잠금 방식</b>
-          <div class="li"><span>밀기</span></div><div class="li"><span>패턴</span></div><div class="li"><span>PIN</span></div><div class="li"><span>비밀번호</span></div>
+          <div class="li"><span>밀기</span></div><div class="li"><span>패턴</span></div><div class="li"><span>PIN</span></div>
           <div class="li hl"><b>없음</b></div>
         </div>
       </div></div>
@@ -465,10 +357,10 @@ section{padding-top:34px;scroll-margin-top:64px}
 
     <div class="step">
       <div class="txt">
-        <div class="hd"><span class="num">2</span><h3>2층 와이파이 연결</h3></div>
-        <div class="path"><span class="chip">설정</span>→<span class="chip">연결</span>→<span class="chip">Wi-Fi</span>→<span class="chip go">2층 와이파이</span></div>
-        <div class="why">이름이 두 개면 <b>5G가 붙지 않은 쪽</b>(2.4GHz)을 고르세요. 멀리까지 닿습니다.</div>
-        <div class="note">지금 음악을 모바일 데이터(LTE·5G)로 틀고 있었어도 <b>와이파이를 켜서 연결</b>해야 합니다. 와이파이가 꺼져 있으면 태블릿이 이 폰을 못 찾습니다.</div>
+        <div class="hd"><span class="num">2</span><h3>와이파이 연결</h3></div>
+        <div class="path"><span class="chip">설정</span>→<span class="chip">Wi-Fi</span>→<span class="chip go">매장 태블릿과 같은 와이파이</span></div>
+        <div class="why">이름이 두 개면 <b>5G가 붙지 않은 쪽</b>(2.4GHz)이 멀리까지 닿습니다.</div>
+        <div class="note">가능하면 공유기 관리 화면에서 이 태블릿을 <b>고정 IP(DHCP 예약)</b>로 정해 두세요. 주소가 바뀌어도 매장 태블릿이 스스로 다시 찾지만, 고정해 두면 더 안정적입니다.</div>
       </div>
       <div class="phone"><div class="scr">
         <div class="sb"><span>9:41</span><span>▮▮</span></div>
@@ -476,7 +368,6 @@ section{padding-top:34px;scroll-margin-top:64px}
         <div class="body">
           <div class="li hl"><b>2층 와이파이</b><small>▂▄▆</small></div>
           <div class="li"><span class="x">2층 와이파이_5G</span><small>✕</small></div>
-          <div class="li"><span>1층 와이파이</span><small>▂▄</small></div>
           <span class="lbl">이름은 예시입니다</span>
         </div>
       </div></div>
@@ -484,22 +375,43 @@ section{padding-top:34px;scroll-margin-top:64px}
 
     <div class="step">
       <div class="txt">
-        <div class="hd"><span class="num">3</span><h3>앱 받아 설치</h3></div>
+        <div class="hd"><span class="num">3</span><h3>한국어 음성 확인</h3></div>
+        <div class="path"><span class="chip">Play 스토어</span>→<span class="chip go">"Google 음성 서비스" 설치·업데이트</span></div>
+        <div class="path"><span class="chip">설정</span>→<span class="chip">돋보기</span>→<span class="chip">"텍스트 음성 변환"</span>→<span class="chip">엔진: Google</span>→<span class="chip go">한국어 음성 내려받기</span></div>
+        <div class="why">삼성 태블릿은 보통 이미 들어 있어 건너뛰어도 됩니다. <b>레노버 등 다른 회사 태블릿</b>은 꼭 하세요.</div>
+        <div class="note">빠뜨려도 괜찮습니다. 앱의 <b>음성(TTS)</b> 칸에 "준비 안 됨"으로 나오고, [TTS 설정 열기]로 바로 갈 수 있습니다.</div>
+      </div>
+      <div class="phone"><div class="scr">
+        <div class="sb"><span>9:41</span><span>▮▮</span></div>
+        <div class="ab plain">텍스트 음성 변환 출력</div>
+        <div class="body">
+          <span class="lbl">기본 엔진</span>
+          <div class="li hl"><b>Google 음성 인식 및 합성</b></div>
+          <span class="lbl">언어</span>
+          <div class="li"><span>한국어 (대한민국)</span><small>✔</small></div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="step">
+      <div class="txt">
+        <div class="hd"><span class="num">4</span><h3>방송용 앱 받아 설치</h3></div>
         <div class="get">
-          <div class="qr" id="qr2" aria-label="설치 파일 QR 코드"></div>
+          <div class="qr" id="qrSpk" aria-label="방송용 설치 파일 QR 코드"></div>
           <div style="display:grid;gap:8px;min-width:0">
-            <div class="url apk-url"></div>
-            <div class="acts"><button class="btn copy-apk">주소 복사</button></div>
+            <div class="why"><b>방송용</b> 파일입니다. 카메라로 QR을 찍거나 링크를 <b>Chrome</b>에서 엽니다.</div>
+            <div class="url" data-apk="spk"></div>
+            <div class="acts"><button class="btn copy-apk" data-apk="spk">주소 복사</button></div>
           </div>
         </div>
-        <div class="path"><span class="chip">Chrome으로 열기</span>→<span class="chip">다운로드</span>→<span class="chip">열기</span>→<span class="chip go">이 출처 허용</span>→<span class="chip go">설치</span></div>
-        <div class="note">"자동 차단" 때문에 막히면: 설정 → 돋보기 → "자동 차단" → 끄기. 설치 뒤 다시 켜도 됩니다.</div>
+        <div class="path"><span class="chip">다운로드</span>→<span class="chip">열기</span>→<span class="chip go">이 출처 허용</span>→<span class="chip">뒤로</span>→<span class="chip go">설치</span></div>
+        <div class="note">앱 이름은 <b>"호출 방송(방송용)"</b>입니다. 키패드 기능이 빠져 있어 Play 프로텍트 경고가 덜 뜹니다. 경고가 나오면 <b>자세히</b> → 설치 계속.</div>
       </div>
       <div class="phone"><div class="scr">
         <div class="sb"><span>9:41</span><span>▮▮</span></div>
         <div class="body" style="align-content:center;justify-items:center;text-align:center;gap:12px">
           <div style="width:56px;height:56px;border-radius:14px;background:#1F4E79;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="#fff" d="M3 10v4c0 .55.45 1 1 1h3l4 4V5L7 9H4c-.55 0-1 .45-1 1zm13.5 2A4.5 4.5 0 0 0 14 7.97v8.05A4.5 4.5 0 0 0 16.5 12zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06A9 9 0 0 0 14 3.23z"/></svg></div>
-          <b style="font-size:15px">호출 방송</b>
+          <b style="font-size:15px">호출 방송(방송용)</b>
           <span class="lbl">이 앱을 설치하시겠습니까?</span>
           <div style="display:flex;gap:24px;font-weight:700;color:#1F6FEB"><span>취소</span><span class="hl" style="padding:0 6px">설치</span></div>
         </div>
@@ -508,47 +420,76 @@ section{padding-top:34px;scroll-margin-top:64px}
 
     <div class="step">
       <div class="txt">
-        <div class="hd"><span class="num">4</span><h3>방송용으로 시작</h3></div>
-        <div class="path"><span class="chip">앱 실행</span>→<span class="chip go">방송용으로 쓰기</span>→<span class="chip go">알림 허용</span>→<span class="chip go">배터리 제한 없음으로</span>→<span class="chip go">허용</span></div>
-        <div class="why">위쪽 알림에 "방송 대기 중 · 192.168.0.23:8080"이 보이면 켜진 것입니다.</div>
+        <div class="hd"><span class="num">5</span><h3>앱 열고 허용하기</h3></div>
+        <div class="path"><span class="chip">앱 실행</span>→<span class="chip go">알림 허용</span>→<span class="chip go">배터리 제한 없음으로</span>→<span class="chip go">허용</span></div>
+        <div class="why">방송용 앱은 역할을 고르지 않고 바로 방송 화면이 열립니다. 맨 위 <b>큰 주소</b>와 초록 <b style="color:var(--ok)">서버 켜짐</b>이 보이면 켜진 것입니다.</div>
+        <div class="note">맨 위 큰 주소를 종이에 적어 앰프 옆에 붙여 두세요.</div>
       </div>
       <div class="phone"><div class="scr">
         <div class="sb"><span>9:41</span><span>▮▮</span></div>
-        <div class="ab">호출 방송 · 역할 선택</div>
+        <div class="ab">호출 방송 · 방송용</div>
         <div class="body">
-          <b>이 기기를 어디에 쓰나요?</b>
-          <div class="card2"><b>매장용 (매장 태블릿)</b><div class="sbtn">매장용으로 쓰기</div></div>
-          <div class="card2"><b>방송용 (앰프 옆 폰)</b><div class="sbtn hl">방송용으로 쓰기</div></div>
+          <span class="lbl">이 폰 주소</span>
+          <div class="big hl">192.168.0.23:8080</div>
+          <span class="green">서버 켜짐 · 대기열 0건</span>
+          <span class="lbl">음성(TTS) 상태: 준비됨</span>
+          <span class="lbl">배터리</span>
+          <span class="green">배터리 제한 없음 ✔</span>
         </div>
       </div></div>
     </div>
 
     <div class="step">
       <div class="txt">
-        <div class="hd"><span class="num">5</span><h3>배터리 보호 켜기</h3></div>
-        <div class="path"><span class="chip">설정</span>→<span class="chip">돋보기</span>→<span class="chip">"배터리 보호"</span>→<span class="chip go">켜기</span>→<span class="chip go">최대</span></div>
-        <div class="why">늘 충전기에 꽂아 두어도 배터리가 덜 부풉니다. (삼성 기준)</div>
+        <div class="hd"><span class="num">6</span><h3>배터리 보호 켜기</h3></div>
+        <div class="path"><span class="chip">설정</span>→<span class="chip">돋보기</span>→<span class="chip">"배터리 보호"</span>→<span class="chip go">켜기</span></div>
+        <div class="why">늘 충전기에 꽂아 두므로 충전을 80~85%에서 멈추게 해 배터리 부풂을 막습니다. 레노버는 "보호 모드"·"충전 제한" 같은 이름일 수 있습니다.</div>
       </div>
       <div class="phone"><div class="scr">
         <div class="sb"><span>9:41</span><span>▮▮</span></div>
         <div class="ab plain">배터리 보호</div>
         <div class="body">
-          <div class="li"><b>사용 중</b><span class="tg on"></span></div>
+          <div class="li"><b>사용 중</b><span class="tg on hl"></span></div>
           <div class="li"><span>기본</span><small>○</small></div>
-          <div class="li"><span>최적화</span><small>○</small></div>
-          <div class="li hl"><b>최대 (80%까지만 충전)</b><small>●</small></div>
+          <div class="li"><b>최대 (80%까지만 충전)</b><small>●</small></div>
         </div>
       </div></div>
     </div>
 
     <div class="step" style="grid-template-columns:1fr">
       <div class="txt">
-        <div class="hd"><span class="num">6</span><h3>앰프 연결 확인</h3></div>
-        <div class="why">음악 트는 폰이 이미 블루투스로 붙어 있으므로 <b>보통은 할 일이 없습니다</b>. 아래 A로 확인만 하세요.</div>
+        <div class="hd"><span class="num">7</span><h3>앰프에 연결</h3></div>
+        <div class="why">태블릿은 <b>선 연결(A)</b>을 권합니다. 블루투스보다 끊김이 없습니다.</div>
         <div class="amp-opts">
           <div class="amp-opt" style="border-color:var(--signal)">
-            <h4>A. 지금 그대로 (블루투스)</h4>
-            <span class="tag">추천 · 바꿀 것 없음</span>
+            <h4>A. 선 연결</h4>
+            <span class="tag">추천 · 3.5mm to RCA 케이블</span>
+            <svg viewBox="0 0 340 150" role="img" aria-label="방송 태블릿 이어폰 단자에서 케이블로 앰프 뒷면 AUX1에 연결">
+              <rect x="6" y="34" width="82" height="64" rx="9" fill="var(--frame)"/>
+              <rect x="12" y="40" width="70" height="52" rx="4" fill="var(--scr)"/>
+              <text x="47" y="122" text-anchor="middle" font-size="11" fill="var(--ink)">방송 태블릿</text>
+              <path d="M88 70 C 130 70, 140 120, 170 104 S 210 74, 236 74" fill="none" stroke="var(--ink)" stroke-width="3"/>
+              <path d="M88 74 C 126 80, 150 130, 180 112 S 216 92, 236 96" fill="none" stroke="var(--err)" stroke-width="3"/>
+              <rect x="180" y="20" width="156" height="110" rx="10" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>
+              <g font-size="11" fill="var(--ink)">
+                <rect x="226" y="58" width="56" height="50" rx="6" fill="var(--signal-soft)" stroke="var(--signal)" stroke-width="2"/>
+                <circle cx="242" cy="74" r="7" fill="var(--bg)" stroke="var(--ink)" stroke-width="2"/>
+                <circle cx="242" cy="96" r="7" fill="var(--bg)" stroke="var(--err)" stroke-width="2"/>
+                <text x="268" y="88" text-anchor="middle" font-weight="700">AUX1</text>
+                <circle cx="306" cy="74" r="6" fill="var(--bg)" stroke="var(--muted)"/><circle cx="306" cy="96" r="6" fill="var(--bg)" stroke="var(--muted)"/>
+                <text x="306" y="120" text-anchor="middle" fill="var(--muted)">AUX2</text>
+              </g>
+              <text x="186" y="13" font-size="11" fill="var(--muted)">앰프 뒷면</text>
+            </svg>
+            <ol>
+              <li>태블릿 <b>이어폰 단자</b>와 앰프 뒷면 <b>AUX1</b>을 케이블로 연결</li>
+              <li>앰프 앞면 <b>SELECT</b>를 <b>AUX1</b>로</li>
+              <li>태블릿 블루투스는 꺼 두기 (소리가 블루투스로 새지 않게)</li>
+            </ol>
+          </div>
+          <div class="amp-opt">
+            <h4>B. 블루투스</h4>
+            <span class="tag">케이블을 못 쓸 때만</span>
             <svg viewBox="0 0 340 150" role="img" aria-label="앰프 앞면: SELECT를 USB로, MODE를 눌러 bLUE 표시">
               <rect x="4" y="20" width="332" height="110" rx="10" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>
               <rect x="20" y="40" width="96" height="40" rx="6" fill="#0B1F12"/>
@@ -564,38 +505,9 @@ section{padding-top:34px;scroll-margin-top:64px}
               <text x="10" y="13" font-size="11" fill="var(--muted)">앰프 앞면 (2층 장비실)</text>
             </svg>
             <ol>
-              <li>앰프 화면에 <b>bLUE</b>가 떠 있는지</li>
-              <li>폰 블루투스 목록에서 앰프가 <b>연결됨</b>인지</li>
-              <li>음악이 스피커로 잘 나오면 끝</li>
+              <li>앰프 <b>SELECT</b>를 USB로 → <b>MODE</b>를 눌러 bLUE</li>
+              <li>태블릿 설정 → 블루투스 → 앰프 이름 연결</li>
             </ol>
-            <div class="note">연결이 끊겨 있으면: SELECT를 USB로 → MODE를 눌러 bLUE → 폰 설정 → 연결 → 블루투스 → 앰프 이름.</div>
-          </div>
-          <div class="amp-opt">
-            <h4>B. 선 연결</h4>
-            <span class="tag">블루투스가 자주 끊길 때만 · 3.5mm to RCA 케이블</span>
-            <svg viewBox="0 0 340 150" role="img" aria-label="방송 폰에서 케이블로 앰프 뒷면 AUX1에 연결">
-              <rect x="10" y="30" width="44" height="86" rx="9" fill="var(--frame)"/>
-              <rect x="15" y="38" width="34" height="66" rx="4" fill="var(--scr)"/>
-              <text x="32" y="140" text-anchor="middle" font-size="11" fill="var(--ink)">방송 폰</text>
-              <path d="M32 116 C 32 140, 120 140, 150 100 S 210 70, 236 74" fill="none" stroke="var(--ink)" stroke-width="3"/>
-              <path d="M32 116 C 32 146, 130 146, 160 106 S 216 90, 236 96" fill="none" stroke="var(--err)" stroke-width="3"/>
-              <rect x="180" y="20" width="156" height="110" rx="10" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>
-              <g font-size="11" fill="var(--ink)">
-                <rect x="226" y="58" width="56" height="50" rx="6" fill="var(--signal-soft)" stroke="var(--signal)" stroke-width="2"/>
-                <circle cx="242" cy="74" r="7" fill="var(--bg)" stroke="var(--ink)" stroke-width="2"/>
-                <circle cx="242" cy="96" r="7" fill="var(--bg)" stroke="var(--err)" stroke-width="2"/>
-                <text x="268" y="88" text-anchor="middle" font-weight="700">AUX1</text>
-                <circle cx="306" cy="74" r="6" fill="var(--bg)" stroke="var(--muted)"/><circle cx="306" cy="96" r="6" fill="var(--bg)" stroke="var(--muted)"/>
-                <text x="306" y="120" text-anchor="middle" fill="var(--muted)">AUX2</text>
-              </g>
-              <text x="186" y="13" font-size="11" fill="var(--muted)">앰프 뒷면</text>
-            </svg>
-            <ol>
-              <li>케이블로 폰과 앰프 뒷면 <b>AUX1</b> 연결</li>
-              <li>앰프 <b>SELECT</b>를 <b>AUX1</b>로</li>
-              <li>음악도 방송도 같은 폰에서 그대로</li>
-            </ol>
-            <div class="note">이어폰 구멍이 없는 폰은 충전 겸용 C타입 오디오 젠더가 필요합니다.</div>
           </div>
         </div>
       </div>
@@ -603,43 +515,274 @@ section{padding-top:34px;scroll-margin-top:64px}
 
     <div class="step">
       <div class="txt">
-        <div class="hd"><span class="num">7</span><h3>음악 켜고 소리 맞추기</h3></div>
-        <div class="path"><span class="chip">음악 틀기</span>→<span class="chip">호출 방송 앱</span>→<span class="chip go">테스트 방송</span></div>
+        <div class="hd"><span class="num">8</span><h3>음악 켜고 소리 맞추기</h3></div>
+        <div class="path"><span class="chip">유튜브 뮤직에서 음악 틀기</span>→<span class="chip">호출 방송 앱</span>→<span class="chip go">테스트 방송</span></div>
         <div class="why">음악이 작아지고 "방송 테스트입니다"가 나온 뒤 음악이 돌아오면 성공.</div>
-        <div class="why">방송이 음악보다 작으면 <b>앱의 방송 음량</b>을 올리고, 둘 다 작으면 <b>앰프 MUSIC 노브</b>를 올립니다. 폰의 음량 버튼은 음악과 방송을 함께 바꿉니다.</div>
-        <div class="note">맨 위 큰 주소를 종이에 적어 앰프 옆에 붙여 두세요. 충전기를 꽂아 두고, 음악 앱은 평소처럼 쓰면 됩니다.</div>
+        <div class="why">방송이 작으면 앱 <b>소리</b> 칸의 <b>방송 음량·목소리 키우기</b>를 올리고, 둘 다 작으면 <b>앰프 MUSIC 노브</b>를 올립니다. 태블릿 음량 버튼은 음악과 방송을 함께 바꿉니다.</div>
+        <div class="note">2층만 작게 들리면 앰프 <b>CH2(2층)</b> 볼륨을 올려 보세요.</div>
       </div>
       <div class="phone"><div class="scr">
         <div class="sb"><span>9:41</span><span>▮▮</span></div>
         <div class="ab">호출 방송 · 방송용</div>
         <div class="body">
-          <span class="lbl">이 폰 주소</span>
-          <div class="big hl">192.168.0.23:8080</div>
-          <span class="green">서버 켜짐 · 대기열 0건</span>
-          <span class="lbl">음성(TTS) 상태: 준비됨</span>
           <div class="sbtn hl">테스트 방송</div>
           <span class="lbl">방송 음량: 80</span>
           <div style="height:6px;border-radius:3px;background:linear-gradient(90deg,#1F4E79 80%,#D9DDE1 80%)"></div>
+          <span class="lbl">목소리 키우기: 60</span>
+          <div style="height:6px;border-radius:3px;background:linear-gradient(90deg,#1F4E79 60%,#D9DDE1 60%)"></div>
+          <div class="li"><span>차임(딩동)</span><span class="tg on"></span></div>
         </div>
       </div></div>
     </div>
   </div>
 </section>
 
+<!-- ───────── 매장 태블릿 ───────── -->
+<section id="tablet">
+  <div class="sec-head">
+    <span class="who">설치 담당 · 매장마다 한 번</span>
+    <h2>매장 태블릿 설치</h2>
+    <p>손님 없는 시간에 하세요. 매장당 5~10분. 앱 화면이 <b>설정 1~5단계</b>를 차례로 안내하고, 다 되면 맨 위가 초록 <b style="color:var(--ok)">설정 5 / 5 완료</b>로 바뀝니다.</p>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="txt">
+        <div class="hd"><span class="num">1</span><h3>매장용 앱 받아 설치</h3></div>
+        <div class="get">
+          <div class="qr" id="qrStore" aria-label="매장용 설치 파일 QR 코드"></div>
+          <div style="display:grid;gap:8px;min-width:0">
+            <div class="why"><b>매장용</b> 파일입니다. 카메라로 QR을 찍거나 링크를 <b>Chrome</b>에서 엽니다.</div>
+            <div class="url" data-apk="store"></div>
+            <div class="acts"><button class="btn copy-apk" data-apk="store">주소 복사</button></div>
+          </div>
+        </div>
+        <div class="path"><span class="chip">다운로드</span>→<span class="chip">열기</span>→<span class="chip go">이 출처 허용</span>→<span class="chip">뒤로</span>→<span class="chip go">설치</span></div>
+        <div class="note">카톡 안에서 열면 받기가 안 될 수 있습니다. 카톡 화면 오른쪽 아래 <b>⋮</b> → <b>다른 브라우저로 열기</b>.<br>"Play 프로텍트" 경고가 나오면 <b>자세히</b> → 설치 계속.</div>
+      </div>
+      <div class="mini-row" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+        <div class="mini"><div class="phone"><div class="scr"><div class="sb"><span>9:41</span><span>▮▮</span></div><div class="body" style="align-content:end;padding-bottom:16px"><div class="card2"><b>foodcourt-caller.apk</b><span class="lbl">다운로드 완료</span><div class="sbtn hl">열기</div></div></div></div></div><span><span class="n">a</span> 열기</span></div>
+        <div class="mini"><div class="phone"><div class="scr"><div class="sb"><span>9:41</span><span>▮▮</span></div><div class="ab plain">출처를 알 수 없는 앱</div><div class="body"><div class="li"><span>이 출처 허용</span><span class="tg on hl"></span></div><span class="lbl">Chrome</span></div></div></div><span><span class="n">b</span> 허용 켜기</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="txt">
+        <div class="hd"><span class="num">2</span><h3>매장용으로 쓰기 · 매장 고르기</h3></div>
+        <div class="path"><span class="chip">앱 실행</span>→<span class="chip go">매장용으로 쓰기</span>→<span class="chip">매장 고르기</span>→<span class="chip go">이 매장이 맞아요</span></div>
+        <div class="why">한 번 고르면 다음부터 바로 설정 화면이 열립니다.</div>
+      </div>
+      <div class="phone wide"><div class="scr">
+        <div class="sb"><span>9:41</span><span>▮▮</span></div>
+        <div class="ab">호출 방송 · 매장용</div>
+        <div class="body">
+          <b style="color:#8D6E00">설정 1 / 5 완료</b>
+          <div class="card2"><b>1. 이 태블릿의 매장 고르기</b><div class="li"><b>하즈벤</b><small>▼</small></div><div class="pbtn hl">이 매장이 맞아요</div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="step">
+      <div class="txt">
+        <div class="hd"><span class="num">3</span><h3>방송 장치와 연결</h3></div>
+        <div class="path"><span class="chip go">방송 장치 찾기·연결 확인</span>→<span class="chip">초록 "연결됨"</span></div>
+        <div class="why"><b>한 번 연결되면 저장됩니다.</b> 태블릿을 껐다 켜도, 공유기가 방송 태블릿 주소를 바꿔도 1~2분 안에 <b>스스로 다시 연결</b>합니다. 다시 누를 일이 없습니다.</div>
+        <div class="why">자동 찾기가 안 되면 [주소 직접 넣기] → 앰프 옆 종이의 주소(예: 192.168.0.23:8080) → [이 주소로 저장·확인].</div>
+        <div class="note">[연결 끊기]는 이 태블릿을 방송에서 <b>일부러 뺄 때만</b> 누릅니다. 끊으면 다시 [방송 장치 찾기·연결 확인]을 누를 때까지 자동으로 붙지 않습니다.</div>
+      </div>
+      <div class="phone wide"><div class="scr">
+        <div class="sb"><span>9:41</span><span>▮▮</span></div>
+        <div class="ab">호출 방송 · 매장용</div>
+        <div class="body">
+          <div class="card2"><b>2. 방송 장치와 연결</b>
+            <div class="pbtn hl">방송 장치 찾기·연결 확인</div>
+            <span class="green">연결됨 · 192.168.0.23:8080 (저장됨 — 다음부터 자동 연결)</span>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px"><div class="sbtn">주소 직접 넣기</div><div class="sbtn">연결 끊기</div></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="step">
+      <div class="txt">
+        <div class="hd"><span class="num">4</span><h3>키패드 기능 켜기</h3></div>
+        <div class="path"><span class="chip go">설정 열기</span>→<span class="chip">설치된 앱</span>→<span class="chip">호출 방송</span>→<span class="chip go">켜기</span>→<span class="chip go">허용</span>→<span class="chip">뒤로</span></div>
+        <div class="why">키패드 입력을 받으려면 꼭 켜야 합니다(접근성 기능). 화면 내용은 읽지 않습니다.</div>
+        <div class="note">켜기가 막히고 "제한된 설정" 안내가 뜨면(안드로이드 13 이상): 설정 → 애플리케이션 → 호출 방송 → 오른쪽 위 <b>⋮</b> → <b>제한된 설정 허용</b> → 다시 켜기.</div>
+      </div>
+      <div class="phone"><div class="scr">
+        <div class="sb"><span>9:41</span><span>▮▮</span></div>
+        <div class="ab plain">호출 방송</div>
+        <div class="body">
+          <div class="li"><span>사용 안 함 → <b>사용 중</b></span><span class="tg on hl"></span></div>
+          <span class="lbl">숫자 키패드의 '-' 번호 Enter를 받아 방송 장치로 보냅니다.</span>
+        </div>
+        <div class="dim"></div>
+        <div class="dialog"><b>호출 방송에 기기 전체 제어 권한을 허용할까요?</b><span class="lbl">키 입력 관찰…</span><div class="dlg-btns"><span>거부</span><span class="hl" style="padding:0 6px">허용</span></div></div>
+      </div></div>
+    </div>
+
+    <div class="step">
+      <div class="txt">
+        <div class="hd"><span class="num">5</span><h3>꺼지지 않게 하기 · 테스트 방송</h3></div>
+        <div class="path"><span class="chip go">배터리 제한 없음으로</span>→<span class="chip go">허용</span>→<span class="chip go">테스트 방송 보내기</span></div>
+        <div class="why">스피커에서 테스트 방송이 나오면 맨 위가 초록 <b style="color:var(--ok)">설정 5 / 5 완료</b>가 됩니다.</div>
+        <div class="seq"><span class="key sm hot">−</span><span class="key sm">2</span><span class="key sm">4</span><span class="key sm">Enter</span><span class="arrow">→</span><b>스피커에서 방송</b></div>
+        <div class="seq"><span class="key sm">2</span><span class="key sm">4</span><span class="key sm">Enter</span><span class="arrow">→</span><b>호출 화면에 평소대로</b></div>
+        <div class="why">둘 다 되면 끝. 마지막으로 <b>호출 앱 화면</b>으로 돌려놓습니다. 키가 안 먹으면 설정 화면의 <b>키패드 눌러 보기</b>로 키가 들어오는지 확인하세요.</div>
+      </div>
+      <div class="phone wide"><div class="scr">
+        <div class="sb"><span>9:41</span><span>▮▮</span></div>
+        <div class="ab">호출 방송 · 매장용</div>
+        <div class="body">
+          <b class="green" style="font-size:15px">설정 5 / 5 완료</b>
+          <span class="lbl">매장: 하즈벤 · 방송 장치: 192.168.0.23:8080</span>
+          <div class="li"><span>1. 매장</span><span class="green">✔</span></div>
+          <div class="li"><span>2. 방송 장치와 연결</span><span class="green">✔</span></div>
+          <div class="li"><span>3. 키패드 기능</span><span class="green">✔</span></div>
+          <div class="li"><span>4. 꺼지지 않게 하기</span><span class="green">✔</span></div>
+          <div class="li"><span>5. 테스트 방송</span><span class="green">✔</span></div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 음악 자동 ───────── -->
+<section id="music">
+  <div class="sec-head">
+    <span class="who">방송 태블릿 · 한 번 설정</span>
+    <h2>음악 자동 켜기·끄기</h2>
+    <p>영업 시작 시각에 유튜브 뮤직이 저절로 재생되고, 마감 시각에 저절로 멈춥니다.</p>
+  </div>
+  <div class="step">
+    <div class="txt">
+      <div class="path"><span class="chip">방송 태블릿 앱</span>→<span class="chip">음악 자동 켜기/끄기</span>→<span class="chip go">사용 켜기</span>→<span class="chip">켜는 시각·끄는 시각</span>→<span class="chip go">음악 시간 저장</span></div>
+      <div class="why">시각은 "10:30", "2100", "21시 30분" 어느 쪽으로 써도 됩니다. 자정을 넘기는 영업(예: 18:00~02:00)도 됩니다.</div>
+      <div class="why">[지금 켜기 테스트]·[지금 끄기 테스트]로 바로 확인할 수 있고, 아래에 마지막 결과가 나옵니다.</div>
+      <div class="note"><b>유튜브 뮤직 프리미엄</b>이어야 화면이 꺼져도 재생됩니다. 처음 한 번은 유튜브 뮤직에서 틀 재생목록을 재생했다가 멈춰 두세요. 그 목록이 이어서 나옵니다.</div>
+    </div>
+    <div class="phone wide"><div class="scr">
+      <div class="sb"><span>9:41</span><span>▮▮</span></div>
+      <div class="ab">호출 방송 · 방송용</div>
+      <div class="body">
+        <b>음악 자동 켜기/끄기</b>
+        <div class="li"><span>자동 켜기/끄기 사용</span><span class="tg on hl"></span></div>
+        <span class="lbl">켜는 시각 (예: 10:30)</span><div class="li"><span>10:30</span></div>
+        <span class="lbl">끄는 시각 (예: 21:00)</span><div class="li"><span>21:00</span></div>
+        <div class="sbtn">음악 시간 저장</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px"><div class="sbtn">지금 켜기 테스트</div><div class="sbtn">지금 끄기 테스트</div></div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ───────── 원격 관리 ───────── -->
+<section id="remote">
+  <div class="sec-head">
+    <span class="who">대표·관리자 휴대폰</span>
+    <h2>원격 관리</h2>
+    <p>휴대폰 브라우저로 방송 태블릿과 매장 태블릿 상태를 보고, 소리·음악 시간을 바꾸고, 테스트 방송을 할 수 있습니다.</p>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="txt">
+        <div class="hd"><span class="num">1</span><h3>관리 PIN 정하기</h3></div>
+        <div class="path"><span class="chip">방송 태블릿 앱</span>→<span class="chip">원격 관리</span>→<span class="chip">PIN 입력(숫자 4~8자리)</span>→<span class="chip go">PIN 저장</span></div>
+        <div class="why">PIN을 정해야 켜집니다. 저장하면 접속 주소가 파란 글씨로 나옵니다.</div>
+      </div>
+      <div class="phone"><div class="scr">
+        <div class="sb"><span>9:41</span><span>▮▮</span></div>
+        <div class="ab">호출 방송 · 방송용</div>
+        <div class="body">
+          <b>원격 관리</b>
+          <b style="color:#1F4E79">http://192.168.0.23:8080/admin</b>
+          <span class="lbl">관리 PIN(숫자 4~8자리 권장)</span>
+          <div class="li"><span>••••</span></div>
+          <div class="sbtn hl">PIN 저장</div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="step">
+      <div class="txt">
+        <div class="hd"><span class="num">2</span><h3>휴대폰으로 들어가기</h3></div>
+        <div class="path"><span class="chip">휴대폰을 같은 와이파이에</span>→<span class="chip">주소창에 위 주소</span>→<span class="chip go">PIN 입력</span></div>
+        <div class="why"><b>PIN은 이 휴대폰에 저장</b>되어 다음부터는 바로 열립니다. 브라우저 메뉴 → <b>홈 화면에 추가</b>를 해 두면 앱처럼 씁니다. 그만 쓸 땐 [이 휴대폰에서 로그아웃].</div>
+        <div class="note">PIN을 5번 틀리면 5분 동안 잠깁니다.</div>
+      </div>
+      <div class="phone"><div class="scr">
+        <div class="sb"><span>9:41</span><span>▮▮</span></div>
+        <div class="body" style="gap:6px">
+          <b style="font-size:14px">호출 방송 · 원격 관리</b>
+          <div class="card2"><b style="color:#1F4E79">방송 장치</b><span class="lbl">버전 0.3.1 · 음성 <span class="green">준비됨</span></span></div>
+          <div class="card2"><b style="color:#1F4E79">매장 태블릿</b>
+            <div class="li"><span>하즈벤</span><span class="green">연결 30초 전</span></div>
+            <div class="li"><span>보니또</span><span class="red">신호 없음 5분 전</span></div>
+          </div>
+          <div class="sbtn">테스트 방송</div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <h3 style="margin:26px 0 10px">원격 관리에서 할 수 있는 것</h3>
+  <div class="card" style="display:grid;gap:6px">
+    <div>• <b>방송 장치</b>: 버전, 음성 준비 여부, 켜진 시간. [서버 다시 시작], [업데이트 확인]</div>
+    <div>• <b>매장 태블릿</b>: 태블릿마다 연결 상태, 키패드 기능 꺼짐, 배터리 제한, 버전, 마지막 전송. 3분 넘게 신호가 없으면 빨간색</div>
+    <div>• <b>테스트 방송</b>: 매장을 골라 바로 방송</div>
+    <div>• <b>소리</b>: 방송 음량, 목소리 키우기, 말하기 속도, 반복 횟수, 딩동</div>
+    <div>• <b>음악</b>: 자동 켜기/끄기 시각, 지금 켜기·끄기</div>
+    <div>• <b>오류·시스템 기록</b>, <b>최근 방송</b></div>
+  </div>
+
+  <h3 style="margin:26px 0 10px">건물 밖에서 들어가기</h3>
+  <div class="card" style="display:grid;gap:8px">
+    <div class="path"><span class="chip">방송 태블릿·대표님 휴대폰에 Tailscale 설치</span>→<span class="chip go">같은 계정으로 로그인</span></div>
+    <div class="why">그 뒤로는 밖에서도 <b>http://(방송 태블릿의 Tailscale 주소):8080/admin</b>으로 들어갑니다. 인터넷에 문을 직접 열지 않는 방식입니다. 설치와 로그인은 대표님이 직접 하세요.</div>
+    <div class="why">태블릿 화면을 직접 만져야 할 때는 AnyDesk·TeamViewer 같은 원격 지원 앱을 따로 씁니다.</div>
+  </div>
+</section>
+
+<!-- ───────── 업데이트 ───────── -->
+<section id="update">
+  <div class="sec-head">
+    <span class="who">누구나</span>
+    <h2>앱 업데이트</h2>
+    <p>고친 버전이 나오면 각 태블릿이 <b>6시간마다 스스로 확인</b>해서 "새 버전" 알림을 띄웁니다.</p>
+  </div>
+  <div class="step">
+    <div class="txt">
+      <div class="path"><span class="chip">알림 누르기 또는 앱의 업데이트 확인·설치</span>→<span class="chip">내려받기</span>→<span class="chip go">업데이트</span></div>
+      <div class="why">안드로이드 규칙상 마지막 <b>[업데이트]</b> 버튼은 태블릿에서 한 번 눌러야 합니다. 처음 한 번은 <b>이 출처 허용</b> 화면이 먼저 뜹니다. 켜고 뒤로 와서 다시 누르세요.</div>
+      <div class="note">v0.3.0보다 옛 버전은 앱 안 업데이트가 없습니다. 위 설치 링크로 한 번 손으로 설치하세요. 설정은 그대로 남습니다.</div>
+    </div>
+    <div class="phone"><div class="scr">
+      <div class="sb"><span>9:41</span><span>▮▮</span></div>
+      <div class="body">
+        <div class="card2"><b>호출 방송 새 버전 0.3.2</b><span class="lbl">눌러서 업데이트하세요</span></div>
+        <b>앱 업데이트</b>
+        <span class="lbl">지금 버전 0.3.1. 새 버전이 있으면 받아서 설치 화면을 띄웁니다.</span>
+        <div class="sbtn hl">업데이트 확인·설치</div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
 <!-- ───────── 휴대폰 예비 입구 ───────── -->
 <section id="backup">
   <div class="sec-head">
-    <span class="who">태블릿·키패드가 고장 났을 때</span>
+    <span class="who">매장 태블릿·키패드가 고장 났을 때</span>
     <h2>휴대폰으로 방송</h2>
     <p>같은 와이파이에 붙은 아무 휴대폰으로도 방송할 수 있습니다. 앱 설치는 필요 없습니다.</p>
   </div>
-  <div class="step" style="background:var(--surface)">
+  <div class="step">
     <div class="txt">
-      <div class="path"><span class="chip">휴대폰 와이파이를 건물 와이파이로</span>→<span class="chip">인터넷 주소창에 입력</span></div>
-      <div class="url" style="font-size:.95rem">http://<b style="color:var(--signal)">방송폰주소</b>:8080/s/<b style="color:var(--brand)">매장이름</b></div>
+      <div class="path"><span class="chip">휴대폰 와이파이를 건물 와이파이로</span>→<span class="chip">주소창에 입력</span></div>
+      <div class="url" style="font-size:.95rem">http://<b style="color:var(--signal)">방송태블릿주소</b>:8080/s/<b style="color:var(--brand)">매장이름</b></div>
       <div class="why">예: http://192.168.0.23:8080/s/하즈벤 (주소는 앰프 옆 종이에 적힌 것)</div>
       <div class="why">자주 쓰면 홈 화면에 추가해 두세요. 번호를 누르고 <b>방송</b>.</div>
-      <div class="why">http://방송폰주소:8080/ 은 상태 화면입니다. 최근 방송 20건과 매장별 링크가 있습니다.</div>
+      <div class="why">http://방송태블릿주소:8080/ 은 상태 화면입니다. 최근 방송 20건과 매장별 링크가 있습니다.</div>
     </div>
     <div class="phone"><div class="scr">
       <div class="sb"><span>9:41</span><span>▮▮</span></div>
@@ -661,30 +804,41 @@ section{padding-top:34px;scroll-margin-top:64px}
   <div class="sec-head">
     <span class="who">누구나</span>
     <h2>안 될 때</h2>
-    <p>위에서부터 차례로 확인하세요.</p>
+    <p>위에서부터 차례로 확인하세요. 원격 관리 화면의 <b>오류·시스템 기록</b>을 찍어 보내 주시면 원격으로 고쳐 업데이트합니다.</p>
   </div>
   <div class="trouble">
     <div class="tr">
       <div class="sym"><span class="pill b-err" style="color:#fff;padding:5px 12px;border-radius:9px">방송 장치에 연결 안 됨</span></div>
       <ol>
         <li>태블릿 위쪽에 <b>와이파이 표시</b>가 있는지</li>
-        <li>2층 <b>방송 폰이 켜져 있고</b> 충전 중인지</li>
+        <li>2층 <b>방송 태블릿이 켜져 있고</b> 충전 중인지</li>
+        <li>방송 태블릿 주소가 바뀌었으면 1~2분 기다리면 스스로 다시 붙습니다. 급하면 앱의 [방송 장치 찾기·연결 확인]</li>
+        <li>설정 화면에 "연결 끊음"이 보이면 누가 [연결 끊기]를 누른 것입니다. [방송 장치 찾기·연결 확인]</li>
         <li>급하면 <a href="#backup">휴대폰으로 방송</a> 또는 무선 마이크</li>
       </ol>
     </div>
     <div class="tr">
       <div class="sym"><span class="key sm hot">−</span>를 눌러도 <b>아무 표시가 안 뜸</b></div>
       <ol>
-        <li>앱을 열어 <b>접근성 서비스</b>가 초록 "켜짐 · 동작 중"인지</li>
-        <li>꺼져 있으면 <a href="#tablet">태블릿 설치 3번</a>을 다시</li>
+        <li>앱을 열어 설정 <b>3. 키패드 기능</b>이 초록 ✔인지</li>
+        <li>꺼져 있으면 <a href="#tablet">매장 태블릿 설치 4번</a>을 다시</li>
+        <li>[키패드 눌러 보기]에 키 이름이 안 나오면 키패드 선(USB)을 다시 꽂기</li>
       </ol>
     </div>
     <div class="tr">
       <div class="sym">초록 "요청 완료"인데 <b>소리가 안 남</b></div>
       <ol>
-        <li>앰프 전원과 <b>SELECT</b>(USB 또는 AUX1), <b>MUSIC</b> 노브</li>
-        <li>블루투스면 방송 폰이 앰프에 연결돼 있는지</li>
-        <li>방송 폰 앱의 <b>테스트 방송</b>과 방송 음량</li>
+        <li>앰프 전원과 <b>SELECT</b>(AUX1 또는 USB), <b>MUSIC</b> 노브</li>
+        <li>방송 태블릿 앱의 <b>음성(TTS)</b>이 "준비됨"인지. 아니면 <a href="#speaker">방송 태블릿 설치 3번</a></li>
+        <li>방송 태블릿 앱의 <b>테스트 방송</b>과 방송 음량</li>
+      </ol>
+    </div>
+    <div class="tr">
+      <div class="sym">음악이 <b>시간에 맞춰 켜지거나 꺼지지 않음</b></div>
+      <ol>
+        <li>앱 <b>음악 자동 켜기/끄기</b>의 사용이 켜져 있고, 시각이 저장됐는지</li>
+        <li>유튜브 뮤직 <b>프리미엄</b>인지, 재생목록을 한 번 틀어 두었는지</li>
+        <li>[지금 켜기 테스트]를 눌러 아래 결과 문장을 확인</li>
       </ol>
     </div>
     <div class="tr">
@@ -692,16 +846,20 @@ section{padding-top:34px;scroll-margin-top:64px}
       <ol><li>일부 음악 앱은 작아지는 대신 잠깐 멈춥니다. 방송이 끝나면 다시 나오므로 그대로 써도 됩니다.</li><li>음악이 다시 안 나오면 음악 앱에서 재생을 한 번 눌러 주세요.</li></ol>
     </div>
     <div class="tr">
-      <div class="sym">음악은 나오는데 <b>방송만 안 나옴</b></div>
-      <ol><li>음악 폰이 2층 <b>와이파이</b>에 붙어 있는지 (모바일 데이터만 켜져 있으면 안 됨)</li><li>폰 위쪽 알림에 "방송 대기 중"이 있는지. 없으면 호출 방송 앱을 한 번 열기</li><li>누가 폰을 가져가지 않았는지</li></ol>
+      <div class="sym"><b>원격 관리</b>에 안 들어가짐</div>
+      <ol>
+        <li>휴대폰이 같은 와이파이인지 (밖이면 Tailscale이 켜져 있는지)</li>
+        <li>방송 태블릿 앱에 관리 PIN이 저장돼 있는지</li>
+        <li>"5번 틀려서 잠김"이면 5분 뒤 다시</li>
+      </ol>
     </div>
     <div class="tr">
       <div class="sym">"딩동" 앞부분이 <b>잘려서</b> 들림</div>
-      <ol><li>방송 폰 앱 → 소리 → <b>앞 무음</b>을 500에서 1000으로 늘리고 저장</li></ol>
+      <ol><li>방송 태블릿 앱 → 소리 → <b>앞 무음</b>을 500에서 1000으로 늘리고 저장</li></ol>
     </div>
     <div class="off">
       <h3>키패드가 이상할 때 바로 끄기</h3>
-      <div class="path"><span class="chip">태블릿 설정</span>→<span class="chip">접근성</span>→<span class="chip">설치된 앱</span>→<span class="chip">호출 방송</span>→<span class="chip go">끄기</span></div>
+      <div class="path"><span class="chip">매장 태블릿 설정</span>→<span class="chip">접근성</span>→<span class="chip">설치된 앱</span>→<span class="chip">호출 방송</span>→<span class="chip go">끄기</span></div>
       <div class="why">끄는 즉시 키패드가 원래대로 호출 화면에만 동작합니다. 기존 호출 시스템에는 아무 영향이 없습니다.</div>
     </div>
   </div>
@@ -715,9 +873,8 @@ section{padding-top:34px;scroll-margin-top:64px}
     <p>인터넷이 끊겨도 건물 와이파이만 살아 있으면 방송됩니다. 기존 호출 시스템과는 따로 움직입니다.</p>
   </div>
   <div class="card flow">
-    <svg viewBox="0 0 720 300" role="img" aria-label="키패드에서 태블릿, 와이파이, 방송 폰, 앰프, 스피커로 이어지는 흐름">
+    <svg viewBox="0 0 720 300" role="img" aria-label="키패드에서 매장 태블릿, 와이파이, 방송 태블릿, 앰프, 스피커로 이어지는 흐름">
       <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
-      <!-- 키패드 -->
       <rect x="10" y="60" width="90" height="110" rx="12" fill="#2B3036"/>
       <g fill="#F4F5F6">
         <rect x="20" y="72" width="16" height="16" rx="3"/><rect x="40" y="72" width="16" height="16" rx="3"/><rect x="60" y="72" width="16" height="16" rx="3"/><rect x="80" y="72" width="12" height="16" rx="3" fill="var(--signal)"/>
@@ -726,77 +883,73 @@ section{padding-top:34px;scroll-margin-top:64px}
         <rect x="20" y="132" width="36" height="16" rx="3"/><rect x="60" y="132" width="16" height="16" rx="3"/><rect x="80" y="92" width="12" height="56" rx="3"/>
       </g>
       <text x="55" y="192" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">숫자 키패드</text>
-      <!-- 태블릿 -->
       <rect x="140" y="58" width="130" height="96" rx="12" fill="var(--frame)"/>
       <rect x="148" y="66" width="114" height="80" rx="6" fill="#DDE5EC"/>
       <rect x="160" y="72" width="90" height="16" rx="4" fill="#2E7D32"/>
       <text x="205" y="84" text-anchor="middle" font-size="9" fill="#fff" font-weight="700">24번 방송 요청 완료</text>
-      <text x="205" y="122" text-anchor="middle" font-size="10" fill="#5B6875">호출 앱 + 우리 앱</text>
+      <text x="205" y="122" text-anchor="middle" font-size="10" fill="#5B6875">호출 앱 + 매장용 앱</text>
       <text x="205" y="176" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">매장 태블릿</text>
-      <!-- 와이파이 -->
       <g transform="translate(330,92)" fill="none" stroke="var(--brand)" stroke-width="5" stroke-linecap="round">
         <path d="M-26 -6 A 37 37 0 0 1 26 -6"/><path d="M-16 4 A 23 23 0 0 1 16 4"/><circle cx="0" cy="14" r="3" fill="var(--brand)"/>
       </g>
       <text x="330" y="134" text-anchor="middle" font-size="12" font-weight="700" fill="var(--brand)">건물 와이파이</text>
       <text x="330" y="150" text-anchor="middle" font-size="10" fill="var(--muted)">인터넷 없어도 됨</text>
-      <!-- 방송 폰 -->
-      <rect x="392" y="50" width="56" height="106" rx="10" fill="var(--frame)"/>
-      <rect x="397" y="58" width="46" height="88" rx="5" fill="var(--scr)"/>
-      <text x="420" y="96" text-anchor="middle" font-size="9" font-weight="700" fill="#1F4E79">방송</text><text x="420" y="108" text-anchor="middle" font-size="9" font-weight="700" fill="#1F4E79">대기 중</text>
-      <text x="420" y="176" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">음악·방송 폰</text>
-      <text x="420" y="192" text-anchor="middle" font-size="10" fill="var(--muted)">2층 장비실</text>
-      <!-- 앰프 -->
-      <rect x="486" y="80" width="100" height="50" rx="8" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>
-      <rect x="494" y="92" width="36" height="20" rx="3" fill="#0B1F12"/><text x="512" y="107" text-anchor="middle" font-size="10" fill="#5CFF8A" font-family="IBM Plex Mono,monospace">bLUE</text>
-      <circle cx="560" cy="104" r="12" fill="var(--bg)" stroke="var(--ink)" stroke-width="2"/>
-      <text x="536" y="152" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">앰프</text>
-      <!-- 스피커 -->
+      <rect x="376" y="64" width="90" height="70" rx="10" fill="var(--frame)"/>
+      <rect x="382" y="70" width="78" height="58" rx="5" fill="var(--scr)"/>
+      <text x="421" y="96" text-anchor="middle" font-size="9" font-weight="700" fill="#1F4E79">방송 대기 중</text><text x="421" y="110" text-anchor="middle" font-size="9" font-weight="700" fill="#1F4E79">♪ 음악</text>
+      <text x="421" y="176" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">방송 태블릿</text>
+      <text x="421" y="192" text-anchor="middle" font-size="10" fill="var(--muted)">2층 장비실</text>
+      <rect x="490" y="80" width="96" height="50" rx="8" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>
+      <rect x="498" y="92" width="36" height="20" rx="3" fill="#0B1F12"/><text x="516" y="107" text-anchor="middle" font-size="10" fill="#5CFF8A" font-family="IBM Plex Mono,monospace">AUX1</text>
+      <circle cx="562" cy="104" r="12" fill="var(--bg)" stroke="var(--ink)" stroke-width="2"/>
+      <text x="538" y="152" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">앰프</text>
       <rect x="626" y="62" width="64" height="86" rx="8" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>
       <circle cx="658" cy="90" r="11" fill="var(--bg)" stroke="var(--ink)" stroke-width="2"/><circle cx="658" cy="124" r="16" fill="var(--bg)" stroke="var(--ink)" stroke-width="2"/>
-      <text x="658" y="170" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">스피커</text>
+      <text x="658" y="170" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">1·2층 스피커</text>
       <g stroke="var(--muted)" stroke-width="2.5" marker-end="url(#ar)" fill="none">
         <line x1="102" y1="112" x2="136" y2="108"/>
         <line x1="272" y1="104" x2="298" y2="100"/>
-        <line x1="362" y1="100" x2="388" y2="100"/>
-        <line x1="450" y1="104" x2="482" y2="104"/>
+        <line x1="362" y1="100" x2="372" y2="100"/>
+        <line x1="468" y1="104" x2="486" y2="104"/>
         <line x1="588" y1="104" x2="622" y2="104"/>
       </g>
-      <!-- 기존 시스템 -->
       <path d="M205 154 L205 240 L300 240" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ar)"/>
       <rect x="304" y="222" width="150" height="36" rx="8" fill="var(--brand-soft)" stroke="var(--brand)"/>
       <text x="379" y="245" text-anchor="middle" font-size="12" fill="var(--ink)">- 없이 친 번호 → 기존 호출 화면</text>
-      <!-- 예비 입구 -->
       <rect x="520" y="214" width="34" height="58" rx="7" fill="var(--frame)"/><rect x="524" y="220" width="26" height="44" rx="3" fill="var(--scr)"/>
-      <path d="M520 236 C 470 236, 440 200, 425 162" fill="none" stroke="var(--signal)" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#ar)"/>
-      <text x="566" y="240" font-size="12" font-weight="700" fill="var(--ink)">직원 휴대폰</text>
-      <text x="566" y="256" font-size="10" fill="var(--muted)">예비 입구</text>
+      <path d="M520 236 C 470 236, 440 200, 425 196" fill="none" stroke="var(--signal)" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#ar)"/>
+      <text x="566" y="240" font-size="12" font-weight="700" fill="var(--ink)">대표·직원 휴대폰</text>
+      <text x="566" y="256" font-size="10" fill="var(--muted)">원격 관리 · 예비 방송</text>
     </svg>
   </div>
 </section>
 
 <footer class="foot">
-  <span>이 안내서: https://kim30707.github.io/foodcourt-caller-android/</span>
-  <span>설치 파일: <span class="apk-url-inline"></span></span>
-  <span>앱 이름 "호출 방송" · 메뉴 이름은 삼성 갤럭시 기준이며 기기마다 조금 다를 수 있습니다. 메뉴가 안 보이면 설정 위쪽 돋보기에 이름을 넣어 찾으세요.</span>
+  <span>이 설명서: https://kim30707.github.io/foodcourt-caller-android/ · 앱 v0.3.1 기준</span>
+  <span>방송 태블릿용: <span data-apk-inline="spk"></span></span>
+  <span>매장 태블릿용: <span data-apk-inline="store"></span></span>
+  <span>메뉴 이름은 삼성 갤럭시 기준이며 기기마다 조금 다를 수 있습니다. 메뉴가 안 보이면 설정 위쪽 돋보기에 이름을 넣어 찾으세요.</span>
 </footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 (function(){
-  var APK = "https://github.com/kim30707/foodcourt-caller-android/releases/latest/download/foodcourt-caller.apk";
-  document.querySelectorAll('.apk-url').forEach(function(el){ el.textContent = APK; });
-  document.querySelectorAll('.apk-url-inline').forEach(function(el){ el.textContent = APK; });
-  ['qr1','qr2'].forEach(function(id){
-    var el = document.getElementById(id);
-    try { new QRCode(el, {text: APK, width: 132, height: 132, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M}); }
-    catch(e){ el.textContent = 'QR을 그리지 못했습니다. 아래 주소를 쓰세요.'; el.style.width='140px'; el.style.fontSize='12px'; }
+  var BASE = "https://github.com/kim30707/foodcourt-caller-android/releases/latest/download/";
+  var APK = {store: BASE + "foodcourt-caller.apk", spk: BASE + "foodcourt-caller-speaker.apk"};
+  document.querySelectorAll('.url[data-apk]').forEach(function(el){ el.textContent = APK[el.dataset.apk]; });
+  document.querySelectorAll('[data-apk-inline]').forEach(function(el){ el.textContent = APK[el.dataset.apkInline]; });
+  [['qrStore','store'],['qrSpk','spk']].forEach(function(p){
+    var el = document.getElementById(p[0]);
+    try { new QRCode(el, {text: APK[p[1]], width: 132, height: 132, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M}); }
+    catch(e){ el.textContent = 'QR을 그리지 못했습니다. 옆 주소를 쓰세요.'; el.style.width='140px'; el.style.fontSize='12px'; }
   });
   document.querySelectorAll('.copy-apk').forEach(function(b){
     b.addEventListener('click', function(){
+      var url = APK[b.dataset.apk];
       var done = function(){ b.textContent = '복사했습니다'; setTimeout(function(){ b.textContent = '주소 복사'; }, 1800); };
-      var fallback = function(){ var u = b.closest('.get').querySelector('.apk-url'); var r = document.createRange(); r.selectNodeContents(u); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = '선택됨, 길게 눌러 복사'; };
-      try { navigator.clipboard.writeText(APK).then(done, fallback); } catch(e){ fallback(); }
+      var fallback = function(){ var u = b.closest('.get').querySelector('.url'); var r = document.createRange(); r.selectNodeContents(u); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = '선택됨, 길게 눌러 복사'; };
+      try { navigator.clipboard.writeText(url).then(done, fallback); } catch(e){ fallback(); }
     });
   });
 
